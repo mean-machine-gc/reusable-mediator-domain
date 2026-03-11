@@ -1,3 +1,9 @@
+---
+layout: default
+title: activateMediation
+nav_order: 3
+---
+
 # activate-mediation-shell
 
 > **Operation Specification** · OpenHIM Reusable Mediator · v1.0

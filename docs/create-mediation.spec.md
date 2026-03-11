@@ -1,3 +1,9 @@
+---
+layout: default
+title: createMediation
+nav_order: 2
+---
+
 # create-mediation-shell
 
 > **Operation Specification** · OpenHIM Reusable Mediator · v1.0

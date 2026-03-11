@@ -1,3 +1,9 @@
+---
+layout: default
+title: deleteMediation
+nav_order: 6
+---
+
 # delete-mediation-shell
 
 > **Operation Specification** · OpenHIM Reusable Mediator · v1.0

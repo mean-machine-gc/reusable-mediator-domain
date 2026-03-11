@@ -1,3 +1,9 @@
+---
+layout: default
+title: updatePipeline
+nav_order: 5
+---
+
 # update-pipeline-shell
 
 > **Operation Specification** · OpenHIM Reusable Mediator · v1.0

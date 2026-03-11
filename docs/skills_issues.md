@@ -1,3 +1,9 @@
+---
+layout: default
+title: Skills Issues
+nav_order: 99
+---
+
 # Skills Issues
 
 ## 1. Shell success type conditions can't distinguish state-dependent outcomes
