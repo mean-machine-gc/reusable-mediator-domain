@@ -1,0 +1,19 @@
+{
+  "name": "mediator-example",
+  "version": "1.0.0",
+  "main": "index.ts",
+  "scripts": {
+    "test": "jest",
+    "gen:specs": "tsx scripts/generate-specs.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "@types/jest": "^29.0.0"
+  }
+}
