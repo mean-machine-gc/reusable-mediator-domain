@@ -77,5 +77,6 @@ export type ShellFactorySpec<
   Deps extends Record<string, any>
 > = FactorySpec<In, Out, F, S> & {
   baseDeps: Deps
+  baseDepsOverrides?: Partial<Record<F | S, Partial<Deps>>>
   depPropagation: Record<keyof Deps, DepPropagationExample<In>>
 }

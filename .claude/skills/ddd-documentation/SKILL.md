@@ -31,62 +31,46 @@ experts, and developers who prefer prose over code.
 
 ---
 
-## How `.spec.md` files work — two owners, one file
+## Two files, two owners
 
-A `.spec.md` has two kinds of sections with different owners:
+Documentation lives in **two separate files** with different owners:
 
-| Sections | Owner | Updated by |
-|---|---|---|
-| §1 Overview, §2 Interface, §3 Scenarios | **AI** (this skill) | Running ddd-documentation |
-| §4 Pipeline, §5 Decision Tables | **CLI** | `npm run gen:specs` (auto-runs on `.spec.ts` save via hook) |
+| File | Location | Owner | Contains |
+|---|---|---|---|
+| Generated tables | `src/<domain>/<operation>/<operation>.spec.md` | **CLI** (`npm run gen:specs`) | §4 Pipeline table, §5 Decision table — raw, machine-generated |
+| Prose documentation | `docs/<operation>.spec.md` | **AI** (this skill) | §1-§5 — full business-friendly document with all sections |
 
-**The CLI never touches prose. The AI never touches generated tables.**
+**The CLI-generated file is never edited by the AI.** It stays next to the
+`.spec.ts` and is auto-updated by the hook when specs change.
 
-When a `.spec.ts` changes (e.g. a new constraint is added), the hook runs
-`npm run gen:specs` which updates §4-§5 between `<!-- BEGIN:GENERATED -->`
-/ `<!-- END:GENERATED -->` markers. If the generated content actually changed,
-the CLI injects a staleness marker above each prose section:
-
-```
-<!-- ⚠ STALE: Generated sections (§4-§5) changed — review this prose section. Run ddd-documentation to update. -->
-```
-
-This marker is your signal: the decision tables have new rows, but the business
-scenarios in §3 don't describe them yet. **When you update prose sections,
-remove the stale markers.**
+**The docs file is the complete, human-readable version.** It includes all
+sections (§1-§5) written in prosaic, business-friendly language. The pipeline
+and decision tables in the docs file are elaborated versions of the CLI output —
+with descriptions, abbreviated headers, and readable scenario names.
 
 ## Your job
 
-**Fill in the business-facing prose sections (§1-§3) only.**
-Do not regenerate §4-§5 — the CLI owns those. Read the generated structural
-sections as input for your prose.
+**Write the full `docs/<operation>.spec.md` file with all sections (§1-§5).**
 
-If the `.spec.md` already exists with generated sections, preserve the markers
-and only write into the prose sections above them. Always remove any
-`<!-- ⚠ STALE: ... -->` markers from sections you update.
-
-If no `.spec.md` exists yet (CLI hasn't run), you can generate the full file
-from the `.spec.ts` directly — but note the user should run `ddd-init` to set
-up automation for ongoing sync.
+Read the CLI-generated `.spec.md` (next to the spec) as structural input, then
+elaborate every section into business-friendly prose. Do NOT edit the
+CLI-generated file — leave it untouched.
 
 ---
 
 ## Input
 
-Ask the user to provide:
-1. The `.spec.md` file (if it exists — has generated structural sections)
-2. The `.spec.ts` file (for success types, descriptions)
+Read these files to generate the documentation:
+1. The CLI-generated `.spec.md` file (next to the `.spec.ts` — has the raw tables)
+2. The `.spec.ts` file (for success types, failure types, step references)
 3. The `types.ts` file (for type names)
-
-Or, if no `.spec.md` exists yet:
-1. The `.spec.ts` file directly — you can read the spec tree and mentally
-   flatten it (though the CLI is preferred for consistency).
 
 ---
 
-## Output format — the polished .spec.md
+## Output format — the polished docs/.spec.md
 
-Follow this numbered section layout exactly. This is the reference format.
+Write to `docs/<operation-name>.spec.md`. Follow this numbered section layout
+exactly. This is the reference format.
 
 ```md
 # operation-name
@@ -139,7 +123,7 @@ No state is modified in any of the following cases.
 
 ---
 
-## 4. Shell Pipeline
+## 4. Pipeline
 
 > The shell orchestrates input validation, data fetching, core domain logic,
 > and persistence. Steps execute in sequence — the pipeline short-circuits
@@ -150,70 +134,59 @@ No state is modified in any of the following cases.
 
 | # | Name | Type | Description | Failure Codes |
 |---|---|---|---|---|
-| 1 | `parseCartId` | `STEP` | Validate the cart identifier format | `not_a_string`, `not_a_uuid` |
-| 2 | `findCartById` | `DEP` | Fetch the cart from persistence by ID | `find_failed` |
+| 1 | `parseTopic` | STEP | Validate the topic format: must be dot-separated segments | `not_a_string`, `empty`, ... |
+| 2 | `findMediation` | DEP | Load the existing mediation from storage by ID | `find_failed` |
+
+This table is an elaborated version of the CLI-generated pipeline table. Each
+step gets a human-readable **Description** column explaining what it does in
+business terms.
 
 ---
 
-## 5. Core Logic
-
-> The core is a pure, synchronous function — no I/O, no side effects.
-
-| # | Step | Description | Failure Codes |
-|---|---|---|---|
-| 1 | `checkActive` | Ensure the cart is in active state | `cart_empty`, `cart_confirmed`, `cart_cancelled` |
-| 2 | `subtractQuantity` | Reduce item quantity by requested amount | — |
-
----
-
-## 6. Decision Tables
+## 5. Decision Table
 
 > Decision tables show which conditions must hold (✓) or fail (✗) to produce
 > each outcome. A dash (—) means the condition is not evaluated — the pipeline
 > has already terminated at an earlier step.
 
-### 6.1 Core
+> Column headers are abbreviated — see §4 for full step names and descriptions.
 
-| Scenario | `checkActive` `:cart_empty` | `checkProduct` `:not_in_cart` | Outcome |
-|---|:---:|:---:|---|
-| ✅ qty reduced | ✓ | ✓ | `ActiveCart` — qty reduced |
-| ❌ cart empty | ✗ | — | Fails: `cart_empty` |
-| ❌ not in cart | ✓ | ✗ | Fails: `not_in_cart` |
+| Scenario | topic str | topic empty | dest url | Outcome |
+|---|:---:|:---:|:---:|---|
+| ✅ mediation created | ✓ | ✓ | ✓ | Draft mediation created |
+| ❌ topic not a string | ✗ | — | — | Fails: `not_a_string` |
 
-### 6.2 Shell
-
-> Column headers are abbreviated — see §4 for full step names.
-
-[Full shell decision table from flat table]
+This table is an elaborated version of the CLI-generated decision table:
+- **Column headers** are abbreviated for readability (e.g. `topic str` instead
+  of `parseTopic :not_a_string`)
+- **Scenario names** are prosaic (e.g. "topic not a string" instead of raw
+  `not_a_string`)
+- **Outcome descriptions** are human-readable
 ```
 
 ---
 
-## Deriving sections from the flat table
+## Deriving sections from the CLI-generated tables
 
-### Section 6 (Decision Tables) — direct translation
+### Section 5 (Decision Table) — elaborate from CLI output
 
-The flat table gives you columns and successes. Translate directly:
-- Each `success` → a ✅ row with all ✓
+Read the raw decision table from the CLI-generated `.spec.md`. Translate into
+the prosaic format:
+- Each `success` → a ✅ row with all ✓ and a readable outcome
 - Each `column` at index i → a ❌ row with ✓ before, ✗ at i, — after
-- Column headers: `\`step\` :failure` or abbreviated for wide tables
+- **Abbreviate column headers** for wide tables (see abbreviation rules below)
+- **Use prosaic scenario names** — "topic not a string" not raw `not_a_string`
 
-### Section 5 (Core Logic) — derived from core flat table
+### Section 4 (Pipeline) — elaborate from CLI output
 
-Group columns by step name. Each unique step becomes a row.
-Failure codes are the column failures for that step.
-Steps with no failures (pure transforms) get `—`.
-
-### Section 4 (Shell Pipeline) — derived from shell flat table
-
-Same grouping. Classify each step as STEP or DEP based on the `type` field
-in the flat constraints.
+Read the raw pipeline table from the CLI-generated `.spec.md`. Add a
+**Description** column with human-readable explanations of what each step does.
+Classify each step as STEP or DEP.
 
 ### Section 3 (Business Scenarios) — elaboration
 
 Take success types and top-level failures. Write in plain business English.
-Use concrete values: "Cart contains 4 sneakers at $100 each (total $400).
-Customer subtracts 2."
+Use concrete values from the spec's test data.
 
 ### Sections 1-2 (Overview, Interface) — elaboration
 
@@ -226,10 +199,12 @@ input/output types.
 ## Abbreviation rules for wide tables
 
 When a decision table has many columns, abbreviate:
-- `parseCartId :not_a_string` → `cId str`
-- `parseCartId :not_a_uuid` → `cId uuid`
-- `parseQuantity :not_a_number` → `qty num`
-- `checkActive :cart_empty` → `core :empty`
+- `parseTopic :not_a_string` → `topic str`
+- `parseTopic :empty` → `topic empty`
+- `parseDestination :invalid_format_url` → `dest url`
+- `parsePipeline :not_an_array` → `pipe arr`
+- `generateId :generate_id_failed` → `gen id`
+- `saveMediation :save_failed` → `save`
 
 Add a note: "Column headers are abbreviated — see §4 for full step names."
 
@@ -237,14 +212,18 @@ Add a note: "Column headers are abbreviated — see §4 for full step names."
 
 ## Hard rules
 
+- **Output goes to `docs/<operation-name>.spec.md`.** Never edit the CLI-generated
+  `.spec.md` next to the spec file.
+- **Include all sections (§1-§5).** The docs file is the complete, self-contained
+  human-readable document. Pipeline and decision tables are elaborated, not omitted.
 - **Never invent scenarios not in the spec.** Every row comes from the flat table.
 - **Never modify the spec.** If something is missing, go back to ddd-spec.
 - **Use ✓/✗/— symbols.** Center-align condition columns with `:---:`.
 - **Business scenarios are in plain English.** No code in §3.
 - **Assertion expressions live in code, not in the spec.md.**
 - **Abbreviate column headers** in wide tables. Reference the pipeline section.
-- **Numbered sections.** Always §1-§6. Simpler functions skip §4/§5.
-- **One operation at a time.** Complete the full .spec.md before moving on.
+- **Numbered sections.** Always §1-§5.
+- **One operation at a time.** Complete the full docs file before moving on.
 
 ## Additional resources
 

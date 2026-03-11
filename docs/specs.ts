@@ -4,5 +4,7 @@
 // Auto-updated by `npm run gen:specs`. Do not edit manually.
 
 export const specDocs: Record<string, string> = {
-  // Populated automatically from the spec manifest
+  'create-mediation-shell': 'src/mediation/create-mediation/create-mediation.spec.md',
+  'activate-mediation-core': 'src/mediation/activate-mediation/core/activate-mediation.spec.md',
+  'activate-mediation-shell': 'src/mediation/activate-mediation/activate-mediation.spec.md',
 }

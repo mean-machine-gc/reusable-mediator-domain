@@ -296,8 +296,73 @@ export const runShellSpec = <
   makeFn: (deps: Deps) => (input: In) => Promise<Result<Out, F, S>>,
   spec:   ShellFactorySpec<In, Out, F, S, Deps>,
 ): void => {
-  runFactorySpecAsync(fn, spec)
+  // ── Failures (with optional per-failure dep overrides) ──────────────────
+  describe('failures', () => {
+    for (const [failure, failureExamples] of Object.entries(spec.failures) as [F, { when: In }[]][]) {
+      describe(failure, () => {
+        const override = spec.baseDepsOverrides?.[failure]
+        const testFn = override ? makeFn({ ...spec.baseDeps, ...override } as Deps) : fn
 
+        failureExamples.forEach((example, i) => {
+          const label = failureExamples.length === 1 ? failure : `${failure} [${i + 1}]`
+          test(label, async () => {
+            const result = await testFn(example.when)
+            expect(result.ok).toBe(false)
+            if (!result.ok) expect(result.errors).toContain(failure)
+          })
+        })
+      })
+    }
+  })
+
+  if (spec.mixed && spec.mixed.length > 0) {
+    describe('mixed failures', () => {
+      for (const example of spec.mixed!) {
+        test(example.description, async () => {
+          const result = await fn(example.when)
+          expect(result.ok).toBe(false)
+          if (!result.ok) {
+            for (const f of example.failsWith) {
+              expect(result.errors).toContain(f)
+            }
+          }
+        })
+      }
+    })
+  }
+
+  // ── Successes (with optional per-success dep overrides) ─────────────────
+  for (const [successType, successSpec] of Object.entries(spec.successes) as [S, any][]) {
+    describe(successType, () => {
+      const override = spec.baseDepsOverrides?.[successType]
+      const testFn = override ? makeFn({ ...spec.baseDeps, ...override } as Deps) : fn
+
+      successSpec.examples.forEach((example: { when: In; then: Out }, i: number) => {
+        const suffix = successSpec.examples.length > 1 ? ` [${i + 1}]` : ''
+
+        test(`condition${suffix}`, async () => {
+          const result = await testFn(example.when)
+          expect(result.ok).toBe(true)
+          if (result.ok)
+            expect(successSpec.condition({ input: example.when, output: result.value })).toBe(true)
+        })
+
+        test(`expected value${suffix}`, async () => {
+          const result = await testFn(example.when)
+          expect(result.ok).toBe(true)
+          if (result.ok) expect(result.value).toEqual(example.then)
+        })
+
+        test(`success type${suffix}`, async () => {
+          const result = await testFn(example.when)
+          expect(result.ok).toBe(true)
+          if (result.ok) expect(result.successType).toContain(successType)
+        })
+      })
+    })
+  }
+
+  // ── Dep propagation ─────────────────────────────────────────────────────
   describe('dep propagation', () => {
     for (const [depName, prop] of Object.entries(spec.depPropagation) as [string, { when: In; failsWith: string }][]) {
       test(`propagates ${depName} failure`, async () => {
