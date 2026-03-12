@@ -1,3 +1,5 @@
+import type { CloudEvent } from 'cloudevents'
+
 export type { Result } from '../shared/spec'
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
@@ -116,10 +118,15 @@ export type FilterRulesFailure =
   | 'conditions_empty'
   | 'invalid_condition'
 
-// ── Transform & Enrich Rules (placeholders) ───────────────────────────────────
+// ── Transform & Enrich Rules ─────────────────────────────────────────────────
 
-export type TransformRules = Record<string, unknown>
+export type TransformRules = string[]
 export type EnrichRules = Record<string, unknown>
+
+// ── Transform Registry (runtime) ────────────────────────────────────────────
+
+export type TransformFn = (event: CloudEvent) => CloudEvent
+export type TransformRegistry = Record<string, TransformFn>
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 
@@ -142,6 +149,7 @@ export type DraftMediation = {
   status: 'draft'
   id: MediationId
   topic: Topic
+  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt
@@ -151,6 +159,7 @@ export type ActiveMediation = {
   status: 'active'
   id: MediationId
   topic: Topic
+  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt
@@ -161,6 +170,7 @@ export type DeactivatedMediation = {
   status: 'deactivated'
   id: MediationId
   topic: Topic
+  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt

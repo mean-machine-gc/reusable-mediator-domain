@@ -66,6 +66,7 @@ const expectedDraft: DraftMediation = {
   status: 'draft',
   id: mediationId,
   topic,
+  schema: {},
   destination,
   pipeline,
   createdAt,

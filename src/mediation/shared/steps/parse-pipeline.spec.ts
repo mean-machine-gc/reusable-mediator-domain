@@ -28,7 +28,7 @@ const multiStepPipeline: Pipeline = [
       ],
     },
   },
-  { type: 'transform', rules: {} },
+  { type: 'transform', rules: [] },
 ]
 
 // ── Spec ───────────────────────────────────────────────────────────────────

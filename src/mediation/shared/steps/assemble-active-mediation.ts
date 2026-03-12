@@ -13,6 +13,7 @@ export const assembleActiveMediation = (
       status: 'active',
       id: state.id,
       topic: state.topic,
+      schema: state.schema,
       destination: state.destination,
       pipeline: state.pipeline,
       createdAt: state.createdAt,

@@ -15,6 +15,7 @@ export const assembleDraftMediation = (input: AssembleDraftMediationInput): Resu
       status: 'draft',
       id: input.ctx.id,
       topic: input.cmd.topic,
+      schema: {},
       destination: input.cmd.destination,
       pipeline: input.cmd.pipeline,
       createdAt: input.ctx.createdAt,
