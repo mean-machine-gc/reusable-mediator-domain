@@ -149,7 +149,6 @@ export type DraftMediation = {
   status: 'draft'
   id: MediationId
   topic: Topic
-  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt
@@ -159,7 +158,6 @@ export type ActiveMediation = {
   status: 'active'
   id: MediationId
   topic: Topic
-  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt
@@ -170,7 +168,6 @@ export type DeactivatedMediation = {
   status: 'deactivated'
   id: MediationId
   topic: Topic
-  schema: unknown
   destination: Destination
   pipeline: Pipeline
   createdAt: CreatedAt

@@ -7,7 +7,6 @@ export const assembleDraftMediation: AssembleDraftMediationFn['signature'] = ({ 
             status: 'draft' as const,
             id: ctx.id,
             topic: cmd.topic,
-            schema: null,
             destination: cmd.destination,
             pipeline: cmd.pipeline,
             createdAt: ctx.createdAt,

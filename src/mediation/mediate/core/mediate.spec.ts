@@ -1,12 +1,14 @@
 import type { SpecFn, Spec, StepInfo, AnyFn } from '../../../shared/spec-framework'
 import type { CloudEvent } from 'cloudevents'
-import type { ActiveMediation, TransformRegistry } from '../../types'
+import type { ActiveMediation, Destination, TransformRegistry } from '../../types'
 import { executeFiltersSpec } from '../steps/execute-filters.spec'
 import { executeTransformsSpec } from '../steps/execute-transforms.spec'
 
+export type MediateResult = { event: CloudEvent; destination: Destination }
+
 export type MediateCoreFn = SpecFn<
     { event: CloudEvent; mediation: ActiveMediation; registry: TransformRegistry },
-    CloudEvent,
+    MediateResult,
     'unknown_transform',
     'event-processed' | 'event-skipped'
 >
@@ -23,7 +25,7 @@ const baseMediation: ActiveMediation = {
     status: 'active',
     id: '00000000-0000-0000-0000-000000000001',
     topic: 'orders.created',
-    schema: {},
+
     destination: 'https://example.com/webhook',
     pipeline: [],
     createdAt: new Date('2025-01-01'),
@@ -77,7 +79,7 @@ export const mediateCoreSpec: Spec<MediateCoreFn> = {
                         },
                         registry: { addFlag: () => transformedEvent },
                     },
-                    then: transformedEvent,
+                    then: { event: transformedEvent, destination: 'https://example.com/webhook' },
                 },
                 {
                     description: 'processes event with empty pipeline',
@@ -86,7 +88,7 @@ export const mediateCoreSpec: Spec<MediateCoreFn> = {
                         mediation: baseMediation,
                         registry: {},
                     },
-                    then: baseEvent,
+                    then: { event: baseEvent, destination: 'https://example.com/webhook' },
                 },
             ],
         },
@@ -113,13 +115,27 @@ export const mediateCoreSpec: Spec<MediateCoreFn> = {
                         },
                         registry: {},
                     },
-                    then: baseEvent,
+                    then: { event: baseEvent, destination: 'https://example.com/webhook' },
                 },
             ],
         },
     },
     shouldAssert: {
-        'event-processed': {},
-        'event-skipped': {},
+        'event-processed': {
+            'destination-from-mediation': {
+                description: 'Destination comes from the mediation config',
+                assert: (input, output) => output.destination === input.mediation.destination,
+            },
+        },
+        'event-skipped': {
+            'event-unchanged': {
+                description: 'Original event is returned unchanged',
+                assert: (input, output) => output.event === input.event,
+            },
+            'destination-from-mediation': {
+                description: 'Destination comes from the mediation config',
+                assert: (input, output) => output.destination === input.mediation.destination,
+            },
+        },
     },
 }

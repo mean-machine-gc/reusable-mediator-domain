@@ -41,7 +41,7 @@ export const assembleDraftMediationSpec: Spec<AssembleDraftMediationFn> = {
                         status: 'draft',
                         id,
                         topic: 'patient.created',
-                        schema: null,
+
                         destination: 'https://example.com/webhook',
                         pipeline: [],
                         createdAt,
@@ -71,7 +71,7 @@ export const assembleDraftMediationSpec: Spec<AssembleDraftMediationFn> = {
                         status: 'draft',
                         id,
                         topic: 'org.facility-registry.update',
-                        schema: null,
+
                         destination: 'http://localhost:3000/callback',
                         pipeline: [
                             {
@@ -95,10 +95,6 @@ export const assembleDraftMediationSpec: Spec<AssembleDraftMediationFn> = {
             'status-is-draft': {
                 description: 'Output status is draft',
                 assert: (_input, output) => output.status === 'draft',
-            },
-            'schema-is-null': {
-                description: 'Schema is null for new drafts',
-                assert: (_input, output) => output.schema === null,
             },
             'id-from-context': {
                 description: 'ID is set from context',

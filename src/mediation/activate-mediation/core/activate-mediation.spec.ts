@@ -28,7 +28,7 @@ const draftMediation: DraftMediation = {
     status: 'draft',
     id: '550e8400-e29b-41d4-a716-446655440000',
     topic: 'patient.created',
-    schema: null,
+
     destination: 'https://example.com/webhook',
     pipeline: [],
     createdAt: new Date('2025-01-01'),
@@ -38,7 +38,7 @@ const deactivatedMediation: DeactivatedMediation = {
     status: 'deactivated',
     id: '550e8400-e29b-41d4-a716-446655440000',
     topic: 'patient.created',
-    schema: null,
+
     destination: 'https://example.com/webhook',
     pipeline: [],
     createdAt: new Date('2025-01-01'),
@@ -63,7 +63,7 @@ export const activateMediationCoreSpec: Spec<ActivateMediationCoreFn> = {
                         status: 'active',
                         id: '550e8400-e29b-41d4-a716-446655440000',
                         topic: 'patient.created',
-                        schema: null,
+                    
                         destination: 'https://example.com/webhook',
                         pipeline: [],
                         createdAt: new Date('2025-01-01'),
@@ -82,7 +82,7 @@ export const activateMediationCoreSpec: Spec<ActivateMediationCoreFn> = {
                         status: 'active',
                         id: '550e8400-e29b-41d4-a716-446655440000',
                         topic: 'patient.created',
-                        schema: null,
+                    
                         destination: 'https://example.com/webhook',
                         pipeline: [],
                         createdAt: new Date('2025-01-01'),
