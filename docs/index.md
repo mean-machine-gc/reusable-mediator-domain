@@ -4,56 +4,85 @@ title: Home
 nav_order: 1
 ---
 
-# Domain: OpenHIM Reusable Mediator
+# OpenHIM Reusable Mediator
 
-> A configurable mediator that sits between OpenHIM pub channels and adapter channels, applying pipelines of operations (filter, transform, enrich) to CloudEvents before routing them to third-party webhook endpoints.
+> A configurable mediator that sits between OpenHIM channels and downstream endpoints,
+> applying pipelines of operations (filter, transform, enrich) to CloudEvents before
+> routing them to third-party webhook destinations — with full lifecycle tracking
+> from ingestion through delivery.
+
+---
+
+## How it works
+
+1. An inbound CloudEvent arrives and is **received** as an Incoming Processing record
+2. The event data is **validated** against its declared JSON Schema
+3. All active Mediations matching the event's topic are evaluated — each applies its
+   pipeline (filter, transform, enrich) and produces a routing outcome
+4. For each routed destination, a **Dispatch** is created and delivery is attempted
+   with configurable retries
+5. The processing record is updated with mediation outcomes (dispatched or skipped per mediation)
 
 ---
 
 ## Aggregates
 
-### Mediation
-Connects a source topic to a destination adapter. Owns the pipeline of operations to apply for that specific path. Handles both configuration lifecycle and event processing.
+### [Mediation](mediation/)
 
-**Lifecycle:** Draft → Active → Deactivated → Deleted
+Connects a source topic to a destination. Owns the pipeline of filter/transform/enrich
+steps applied to each event on that route.
 
-**Constraints:**
-- Only one Mediation can be Active for a given topic+destination pair.
+| State | Description |
+|---|---|
+| **Draft** | Created with pipeline configuration, not yet routing events |
+| **Active** | Accepting and processing events for its topic |
+| **Deactivated** | Paused, no longer processing events |
 
-**Commands:**
-- [`createMediation`](mediation/create-mediation) — create a new Mediation in Draft state with source topic, destination, and pipeline steps
-- `updatePipeline` — replace the pipeline steps/rules (only in Draft or Deactivated)
-- [`activateMediation`](mediation/activate-mediation) — Draft → Active (must verify no other Active Mediation exists for same topic+destination)
-- [`deactivateMediation`](mediation/deactivate-mediation) — Active → Deactivated
-- `deleteMediation` — remove permanently (only from Draft or Deactivated)
-- [`mediate`](mediation/mediate) — run the pipeline against an incoming event; returns processed event + destination, or nothing if filtered out (only when Active)
+**Constraint:** Only one Mediation can be Active for a given topic+destination pair.
 
-**Value Objects:**
-- **Pipeline** — ordered sequence of steps (filter, transform, enrich), each with its own rules/configuration
-- **PipelineStep** — a step type (filter | transform | enrich) paired with its rules
+**Operations:** [Create](mediation/create-mediation) | [Activate](mediation/activate-mediation) | [Deactivate](mediation/deactivate-mediation) | [Mediate](mediation/mediate) | [Handle Event](mediation/handle-event)
 
 ---
 
-## Domain Services
+### [Incoming Processing](incoming-processing/)
 
-- `mediateEvent(topic, event)` — finds all Active Mediations for the given topic, runs each one's pipeline, collects results (processed event + destination pairs)
-- `cloneMediation(sourceMediationId)` — reads an existing Mediation's config and creates a new one in Draft with the same topic, destination, and pipeline
-- `switchVersion(oldMediationId, newMediationId)` — deactivates the old Mediation and activates the new one (not atomic — two separate operations)
+Tracks the lifecycle of an inbound CloudEvent from arrival through schema validation,
+mediation, and outcome recording. Provides a persistent, inspectable audit trail.
+
+| State | Description |
+|---|---|
+| **Received** | Event accepted, awaiting validation |
+| **Validated** | Schema validation passed, awaiting mediation |
+| **Mediated** | All mediations evaluated, outcomes recorded |
+| **Failed** | An error occurred at any stage (terminal) |
+
+**Operations:** [Receive Event](incoming-processing/receive-event) | [Validate Processing](incoming-processing/validate-processing) | [Mediate Processing](incoming-processing/mediate-processing) | [Fail Processing](incoming-processing/fail-processing)
 
 ---
 
-## Policies
+### [Dispatches](dispatches/)
 
-- When **Mediation** is activated → verify no other Active Mediation exists for the same topic+destination
-- When a filter step drops an event → pipeline short-circuits, no result is returned for that Mediation
-- When a pipeline step fails → (open question: fail the whole pipeline? skip the step?)
+Tracks outbound event delivery to each destination with retry logic. Each dispatch
+captures every delivery attempt with full HTTP response detail for observability.
+
+| State | Description |
+|---|---|
+| **To-deliver** | Created from a mediation outcome, awaiting first attempt |
+| **Attempted** | At least one failed attempt, retries still available |
+| **Delivered** | Successfully delivered to the destination |
+| **Failed** | All retry attempts exhausted without success |
+
+**Operations:** [Create Dispatch](dispatches/create-dispatch) | [Record Delivery](dispatches/record-delivery)
 
 ---
 
-## Open Questions
+## Event flow
 
-- **Transformation rule format** — what expression language or mechanism for transform steps? (JSONata, templates, custom mappings?) To be explored during implementation.
-- **Enrichment design** — enrichment steps call external APIs. How are those API endpoints and auth configured per step? Low priority but needs a slot in PipelineStep config.
-- **Pipeline step failure handling** — if a transform or enrich step fails at runtime, does the whole pipeline fail or do we skip/retry? Needs a policy decision.
-- **Uniqueness enforcement for activation** — the "only one active per topic+destination" constraint crosses aggregate boundaries. The domain service enforcing activation will need to query existing Mediations. Worth noting as a design tension.
-- **Event shape after transformation** — does the output need to remain a valid CloudEvent, or can transforms produce arbitrary payloads?
+```
+CloudEvent ──▶ Receive ──▶ Validate ──▶ Mediate ──┬──▶ Dispatch A ──▶ Deliver
+               (Processing)                       ├──▶ Dispatch B ──▶ Deliver
+                                                   └──▶ (skipped)
+```
+
+Each arrow is a tracked state transition. Failures at any point are recorded
+with full context for debugging and retry.
