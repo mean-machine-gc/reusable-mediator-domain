@@ -1,18 +1,14 @@
 // evaluate-condition strategy step
-import type { Result } from '../../../shared/spec'
+import type { EvaluateConditionHandlerFn } from './evaluate-condition.spec'
+import type { Result } from '../../../shared/spec-framework'
 import type { FilterCondition } from '../../types'
 
-export type EvaluateConditionInput = { fieldValue: unknown; condition: FilterCondition }
-export type EvaluateConditionOutput = boolean
-export type EvaluateConditionFailure = never
-export type EvaluateConditionSuccess = 'condition-evaluated'
-
-const ok = (value: boolean): Result<boolean, never, EvaluateConditionSuccess> =>
+const ok = (value: boolean): Result<boolean, never, 'condition-evaluated'> =>
   ({ ok: true, value, successType: ['condition-evaluated'] })
 
 export const evaluateCondition: Record<
   FilterCondition['operator'],
-  (input: EvaluateConditionInput) => Result<EvaluateConditionOutput, EvaluateConditionFailure, EvaluateConditionSuccess>
+  EvaluateConditionHandlerFn['signature']
 > = {
   // Equality
   equals:     ({ fieldValue, condition }) => ok(fieldValue === (condition as { value: unknown }).value),

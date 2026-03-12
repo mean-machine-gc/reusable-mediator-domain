@@ -1,70 +1,36 @@
 // evaluate-filter-step step factory
-import type { CloudEvent } from 'cloudevents'
-import type { Result } from '../../../shared/spec'
-import type { FilterRules, FilterCondition } from '../../types'
-
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-export type EvaluateFilterStepInput = { event: CloudEvent; rules: FilterRules }
-export type EvaluateFilterStepOutput = boolean
-export type EvaluateFilterStepFailure = ResolveFieldFailure | EvaluateConditionFailure | ComposeResultsFailure
-export type EvaluateFilterStepSuccess = 'filter-matched' | 'filter-rejected'
-
-export type ResolveFieldFailure = string // TBD
-export type ResolveFieldSuccess = 'field-resolved'
-
-export type EvaluateConditionFailure = string // TBD
-export type EvaluateConditionSuccess = 'condition-evaluated'
-
-export type ComposeResultsFailure = string // TBD
-export type ComposeResultsSuccess = 'results-composed'
-
-// ── Steps ──────────────────────────────────────────────────────────────────────
+import type { EvaluateFilterStepFn } from './evaluate-filter-step.spec'
+import type { FilterCondition } from '../../types'
+import { resolveField } from './resolve-field'
+import { evaluateCondition } from './evaluate-condition'
+import { composeResults } from './compose-results'
 
 type Steps = {
-  resolveField: (input: {
-    event: CloudEvent
-    path: string
-  }) => Result<unknown, ResolveFieldFailure, ResolveFieldSuccess>
-
-  evaluateCondition: Record<
-    FilterCondition['operator'],
-    (input: {
-      fieldValue: unknown
-      condition: FilterCondition
-    }) => Result<boolean, EvaluateConditionFailure, EvaluateConditionSuccess>
-  >
-
-  composeResults: (input: {
-    results: boolean[]
-    logic: 'and' | 'or'
-  }) => Result<boolean, ComposeResultsFailure, ComposeResultsSuccess>
+    resolveField: typeof resolveField
+    evaluateCondition: typeof evaluateCondition
+    composeResults: typeof composeResults
 }
 
-// ── Factory ────────────────────────────────────────────────────────────────────
+const evaluateFilterStepFactory =
+    (steps: Steps): EvaluateFilterStepFn['signature'] =>
+    (input) => {
+        const results: boolean[] = []
+        for (const condition of input.rules.conditions) {
+            const fieldValue = steps.resolveField({ event: input.event, path: condition.field })
+            if (!fieldValue.ok) return fieldValue as any
 
-export const evaluateFilterStepFactory =
-  (steps: Steps) =>
-  (input: EvaluateFilterStepInput): Result<EvaluateFilterStepOutput, EvaluateFilterStepFailure, EvaluateFilterStepSuccess> => {
-    // 1. evaluate each condition
-    const results: boolean[] = []
-    for (const condition of input.rules.conditions) {
-      // 1a. resolve the field value from the event
-      const fieldValue = steps.resolveField({ event: input.event, path: condition.field })
-      if (!fieldValue.ok) return fieldValue as unknown as Result<EvaluateFilterStepOutput, EvaluateFilterStepFailure, EvaluateFilterStepSuccess>
+            const evaluation = steps.evaluateCondition[condition.operator]({ fieldValue: fieldValue.value, condition })
+            if (!evaluation.ok) return evaluation as any
 
-      // 1b. evaluate the condition against the resolved value
-      const evaluation = steps.evaluateCondition[condition.operator]({ fieldValue: fieldValue.value, condition })
-      if (!evaluation.ok) return evaluation as unknown as Result<EvaluateFilterStepOutput, EvaluateFilterStepFailure, EvaluateFilterStepSuccess>
+            results.push(evaluation.value)
+        }
 
-      results.push(evaluation.value)
+        const composed = steps.composeResults({ results, logic: input.rules.logic })
+        if (!composed.ok) return composed as any
+
+        const successType: 'filter-matched' | 'filter-rejected' = composed.value ? 'filter-matched' : 'filter-rejected'
+        return { ok: true, value: composed.value, successType: [successType] }
     }
 
-    // 2. compose results with and/or logic
-    const composed = steps.composeResults({ results, logic: input.rules.logic })
-    if (!composed.ok) return composed as unknown as Result<EvaluateFilterStepOutput, EvaluateFilterStepFailure, EvaluateFilterStepSuccess>
-
-    // 3. return match result with appropriate success type
-    const successType: EvaluateFilterStepSuccess = composed.value ? 'filter-matched' : 'filter-rejected'
-    return { ok: true, value: composed.value, successType: [successType] }
-  }
+const filterSteps: Steps = { resolveField, evaluateCondition, composeResults }
+export const evaluateFilterStep = evaluateFilterStepFactory(filterSteps)

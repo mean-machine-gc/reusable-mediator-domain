@@ -1,13 +1,7 @@
 // resolve-field step
-import type { CloudEvent } from 'cloudevents'
-import type { Result } from '../../../shared/spec'
+import type { ResolveFieldFn } from './resolve-field.spec'
 
-export type ResolveFieldInput = { event: CloudEvent; path: string }
-export type ResolveFieldOutput = unknown
-export type ResolveFieldFailure = 'invalid_path'
-export type ResolveFieldSuccess = 'field-resolved'
-
-export const resolveField = (input: ResolveFieldInput): Result<ResolveFieldOutput, ResolveFieldFailure, ResolveFieldSuccess> => {
+export const resolveField: ResolveFieldFn['signature'] = (input) => {
   const segments = input.path.split('.')
   let current: unknown = input.event
 

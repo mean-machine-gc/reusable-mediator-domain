@@ -1,6 +1,6 @@
 import type { CloudEvent } from 'cloudevents'
 
-export type { Result } from '../shared/spec'
+export type { Result } from '../shared/spec-framework'
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
 

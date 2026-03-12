@@ -1,44 +1,48 @@
-// activate-mediation shell factory
+import type { ActivateMediationShellFn } from './activate-mediation.spec'
+import type { Result } from '../../shared/spec-framework'
 import type { MediationId, Mediation, ActiveMediation, ActivatedAt } from '../types'
-import { activateMediationCoreFactory, coreSteps } from './core/activate-mediation'
+import { parseMediationId } from '../shared/steps/parse-mediation-id'
+import { activateMediationCore } from './core/activate-mediation'
 
 type ShellSteps = {
-  parseMediationId: (input: unknown) => Result<MediationId>
-  activateMediationCore: (input: CoreInput) => Result<CoreOutput, CoreFailure, CoreSuccess>
+    parseMediationId: typeof parseMediationId
+    activateMediationCore: typeof activateMediationCore
+}
+
+type Deps = {
+    findMediation: (id: MediationId) => Promise<Result<Mediation>>
+    generateTimestamp: () => Promise<Result<ActivatedAt>>
+    saveMediation: (mediation: ActiveMediation) => Promise<Result<ActiveMediation>>
 }
 
 export const shellSteps: ShellSteps = {
-  parseMediationId,
-  activateMediationCore: activateMediationCoreFactory(coreSteps),
+    parseMediationId,
+    activateMediationCore,
 }
 
-export const activateMediationShellFactory =
-  (steps: ShellSteps) =>
-  (deps: Deps) =>
-  async (input: ShellInput): Promise<Result<ShellOutput, ShellFailure, ShellSuccess>> => {
-    // 1. parse mediation ID from command
-    const mediationId = steps.parseMediationId(input.cmd.mediationId)
-    if (!mediationId.ok) return mediationId as Result<ShellOutput, ShellFailure, ShellSuccess>
+const activateMediationShellFactory =
+    (steps: ShellSteps) =>
+    (deps: Deps): ActivateMediationShellFn['asyncSignature'] =>
+    async (input) => {
+        const mediationId = steps.parseMediationId(input.cmd.mediationId)
+        if (!mediationId.ok) return mediationId as any
 
-    // 2. find mediation (dep)
-    const mediation = await deps.findMediation(mediationId.value)
-    if (!mediation.ok) return mediation as Result<ShellOutput, ShellFailure, ShellSuccess>
+        const mediation = await deps.findMediation(mediationId.value)
+        if (!mediation.ok) return mediation as any
 
-    // 3. generate timestamp (dep)
-    const timestamp = await deps.generateTimestamp()
-    if (!timestamp.ok) return timestamp as Result<ShellOutput, ShellFailure, ShellSuccess>
+        const timestamp = await deps.generateTimestamp()
+        if (!timestamp.ok) return timestamp as any
 
-    // 4. activate mediation core (step)
-    const activated = steps.activateMediationCore({
-      cmd: input.cmd,
-      state: mediation.value,
-      ctx: { activatedAt: timestamp.value },
-    })
-    if (!activated.ok) return activated as Result<ShellOutput, ShellFailure, ShellSuccess>
+        const activated = steps.activateMediationCore({
+            state: mediation.value,
+            ctx: { activatedAt: timestamp.value },
+        })
+        if (!activated.ok) return activated as any
 
-    // 5. save mediation (dep)
-    const saved = await deps.saveMediation(activated.value)
-    if (!saved.ok) return saved as Result<ShellOutput, ShellFailure, ShellSuccess>
+        const saved = await deps.saveMediation(activated.value)
+        if (!saved.ok) return saved as any
 
-    return { ok: true, value: saved.value, successType: activated.successType }
-  }
+        return { ok: true, value: saved.value, successType: activated.successType }
+    }
+
+export const makeActivateMediation = activateMediationShellFactory(shellSteps)

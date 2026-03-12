@@ -1,16 +1,7 @@
 // execute-transforms step
-import type { CloudEvent } from 'cloudevents'
-import type { Result } from '../../../shared/spec'
-import type { TransformStep, TransformRegistry } from '../../types'
+import type { ExecuteTransformsFn } from './execute-transforms.spec'
 
-export type ExecuteTransformsInput = { event: CloudEvent; transforms: TransformStep[]; registry: TransformRegistry }
-export type ExecuteTransformsOutput = CloudEvent
-export type ExecuteTransformsFailure = 'unknown_transform'
-export type ExecuteTransformsSuccess = 'transforms-applied'
-
-export const executeTransforms = (
-  input: ExecuteTransformsInput,
-): Result<ExecuteTransformsOutput, ExecuteTransformsFailure, ExecuteTransformsSuccess> => {
+export const executeTransforms: ExecuteTransformsFn['signature'] = (input) => {
   let event = input.event
 
   for (const step of input.transforms) {
