@@ -23,3 +23,4 @@ The Mediation aggregate connects a source topic to a destination adapter. It own
 | [Activate Mediation](activate-mediation) | Transition a Draft or Deactivated mediation to Active |
 | [Deactivate Mediation](deactivate-mediation) | Transition an Active mediation to Deactivated |
 | [Mediate](mediate) | Run the pipeline against an incoming CloudEvent — filter, transform, and route |
+| [Handle Event](handle-event) | Service entry point — validate schema, fan out to all matching mediations, collect dispatch results |

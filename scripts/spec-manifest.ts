@@ -53,4 +53,9 @@ export const specManifest: ManifestEntry[] = [
     specPath: '../src/mediation/create-mediation/create-mediation.spec',
     exportName: 'createMediationShellSpec',
   },
+  {
+    name: 'handle-event-service',
+    specPath: '../src/mediation/service/service.spec',
+    exportName: 'mediationServiceSpec',
+  },
 ]
