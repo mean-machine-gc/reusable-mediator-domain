@@ -1,9 +1,22 @@
-import type { SpecFn, Spec } from '../../../shared/spec-framework'
+import type { SpecFn, StrategyFn, Spec, AnyFn } from '../../../shared/spec-framework'
 import type { FilterCondition } from '../../types'
+
+// ── Handler SpecFn (each operator is tested individually) ───────────────────
 
 export type EvaluateConditionHandlerFn = SpecFn<
     { fieldValue: unknown; condition: FilterCondition },
     boolean,
+    never,
+    'condition-evaluated'
+>
+
+// ── Strategy phantom type ───────────────────────────────────────────────────
+
+export type EvaluateConditionStrategyFn = StrategyFn<
+    'evaluateCondition',
+    { fieldValue: unknown; condition: FilterCondition },
+    boolean,
+    FilterCondition['operator'],
     never,
     'condition-evaluated'
 >
@@ -326,6 +339,8 @@ export const notInHandlerSpec: Spec<EvaluateConditionHandlerFn> = {
     shouldAssert: { 'condition-evaluated': {} },
 }
 
+// ── Combined handler specs record (used by testSpec loop and strategy step) ─
+
 export const evaluateConditionHandlerSpecs: Record<FilterCondition['operator'], Spec<EvaluateConditionHandlerFn>> = {
     equals: equalsHandlerSpec,
     not_equals: notEqualsHandlerSpec,
@@ -342,3 +357,22 @@ export const evaluateConditionHandlerSpecs: Record<FilterCondition['operator'], 
     in: inHandlerSpec,
     not_in: notInHandlerSpec,
 }
+
+// ── Strategy handler specs (for StrategyStep in parent factory specs) ───────
+
+export const evaluateConditionStrategyHandlerSpecs = {
+    equals: equalsHandlerSpec,
+    not_equals: notEqualsHandlerSpec,
+    exists: existsHandlerSpec,
+    not_exists: notExistsHandlerSpec,
+    contains: containsHandlerSpec,
+    starts_with: startsWithHandlerSpec,
+    ends_with: endsWithHandlerSpec,
+    regex: regexHandlerSpec,
+    greater_than: greaterThanHandlerSpec,
+    less_than: lessThanHandlerSpec,
+    greater_than_or_equal: greaterThanOrEqualHandlerSpec,
+    less_than_or_equal: lessThanOrEqualHandlerSpec,
+    in: inHandlerSpec,
+    not_in: notInHandlerSpec,
+} satisfies Record<EvaluateConditionStrategyFn['cases'], Spec<EvaluateConditionHandlerFn>> as unknown as Record<EvaluateConditionStrategyFn['cases'], Spec<AnyFn>>

@@ -1,13 +1,13 @@
 // evaluate-filter-step step factory
 import type { EvaluateFilterStepFn } from './evaluate-filter-step.spec'
-import type { FilterCondition } from '../../types'
+import type { EvaluateConditionStrategyFn } from './evaluate-condition.spec'
 import { resolveField } from './resolve-field'
 import { evaluateCondition } from './evaluate-condition'
 import { composeResults } from './compose-results'
 
 type Steps = {
     resolveField: typeof resolveField
-    evaluateCondition: typeof evaluateCondition
+    evaluateCondition: EvaluateConditionStrategyFn['handlers']
     composeResults: typeof composeResults
 }
 

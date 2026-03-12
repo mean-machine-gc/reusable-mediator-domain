@@ -75,11 +75,34 @@ When an event is skipped:
 
 Each filter step is evaluated by `evaluateFilterStep`, which composes:
 
-| # | Name | Description |
+| # | Name | Type | Description |
+|---|---|---|---|
+| 1 | `resolveField` | `STEP` | Extract the field value from the CloudEvent using a dot-separated path |
+| 2 | `evaluateCondition` | `STRATEGY` | Dispatch to the appropriate operator handler based on the condition type |
+| 3 | `composeResults` | `STEP` | Apply `and`/`or` logic to combine individual condition results |
+
+#### Strategy: `evaluateCondition`
+
+The condition operator determines which handler runs. All handlers are pure boolean evaluators — none can fail.
+
+| Handler | Category | Description |
 |---|---|---|
-| 1 | `resolveField` | Extract the field value from the CloudEvent using a dot-separated path |
-| 2 | `evaluateCondition` | Evaluate the condition operator against the resolved value (14 operators: equals, not_equals, exists, not_exists, contains, starts_with, ends_with, regex, greater_than, less_than, greater_than_or_equal, less_than_or_equal, in, not_in) |
-| 3 | `composeResults` | Apply `and`/`or` logic to combine individual condition results |
+| `equals` | Equality | True when field value strictly equals the condition value |
+| `not_equals` | Equality | True when field value does not equal the condition value |
+| `exists` | Presence | True when field value is not undefined |
+| `not_exists` | Presence | True when field value is undefined |
+| `contains` | String | True when string field contains the substring |
+| `starts_with` | String | True when string field starts with the prefix |
+| `ends_with` | String | True when string field ends with the suffix |
+| `regex` | String | True when string field matches the regex pattern |
+| `greater_than` | Comparison | True when numeric field is greater than the value |
+| `less_than` | Comparison | True when numeric field is less than the value |
+| `greater_than_or_equal` | Comparison | True when numeric field is greater than or equal to the value |
+| `less_than_or_equal` | Comparison | True when numeric field is less than or equal to the value |
+| `in` | Collection | True when field value is found in the values list |
+| `not_in` | Collection | True when field value is not found in the values list |
+
+> String and comparison operators return `false` (rather than failing) when the field value is not the expected type.
 
 If **any** filter step rejects the event (with `and`/`or` logic), the entire filter pipeline short-circuits with `event-skipped`.
 
