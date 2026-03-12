@@ -1,5 +1,6 @@
 import type { CloudEvent } from 'cloudevents'
 import type {
+  ProcessingId, ProcessingIdFailure,
   MediationId,
   Topic,
   Destination,
@@ -7,16 +8,10 @@ import type {
 
 export type { Result } from '../shared/spec-framework'
 
-// ── Domain Primitives ─────────────────────────────────────────────────────────
+// ── Shared Domain Primitives (re-exported) ──────────────────────────────────
+export type { ProcessingId, ProcessingIdFailure }
 
-// Identifiers
-export type ProcessingId = string
-export type ProcessingIdFailure =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_64'
-  | 'not_a_uuid'
-  | 'script_injection'
+// ── Domain Primitives ─────────────────────────────────────────────────────────
 
 // Schema
 export type DataschemaUri = string

@@ -2,6 +2,14 @@
 // Primitives used across aggregate boundaries.
 
 // Identifiers
+export type ProcessingId = string
+export type ProcessingIdFailure =
+  | 'not_a_string'
+  | 'empty'
+  | 'too_long_max_64'
+  | 'not_a_uuid'
+  | 'script_injection'
+
 export type MediationId = string
 export type MediationIdFailure =
   | 'not_a_string'

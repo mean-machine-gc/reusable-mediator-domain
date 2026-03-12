@@ -99,4 +99,25 @@ export const specManifest: ManifestEntry[] = [
     specPath: '../src/incoming-processing/fail-processing/fail-processing.spec',
     exportName: 'failProcessingShellSpec',
   },
+  // ── Dispatches ────────────────────────────────────────────────────────────────
+  {
+    name: 'create-dispatch-core',
+    specPath: '../src/dispatches/create-dispatch/core/create-dispatch.spec',
+    exportName: 'createDispatchSpec',
+  },
+  {
+    name: 'create-dispatch-shell',
+    specPath: '../src/dispatches/create-dispatch/create-dispatch.spec',
+    exportName: 'createDispatchShellSpec',
+  },
+  {
+    name: 'record-delivery-core',
+    specPath: '../src/dispatches/record-delivery/core/record-delivery.spec',
+    exportName: 'recordDeliverySpec',
+  },
+  {
+    name: 'record-delivery-shell',
+    specPath: '../src/dispatches/record-delivery/record-delivery.spec',
+    exportName: 'recordDeliveryShellSpec',
+  },
 ]
