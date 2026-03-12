@@ -1,11 +1,6 @@
 // create-mediation.ts
-import type { Result, FunctionSpec } from '../../shared/spec'
 import type { DraftMediation, MediationId, Topic, Destination, Pipeline, CreatedAt } from '../types'
-import type { ShellInput, ShellOutput, ShellFailure, ShellSuccess, Deps } from './create-mediation.spec'
-import { parseTopic } from '../shared/steps/parse-topic'
-import { parseDestination } from '../shared/steps/parse-destination'
-import { parsePipeline } from '../shared/steps/parse-pipeline'
-import { assembleDraftMediation } from '../shared/steps/assemble-draft-mediation'
+
 
 type ShellSteps = {
   parseTopic: (input: unknown) => Result<Topic>

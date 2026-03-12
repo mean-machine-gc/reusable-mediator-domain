@@ -1,9 +1,5 @@
 // activate-mediation shell factory
-import type { Result } from '../../shared/spec'
 import type { MediationId, Mediation, ActiveMediation, ActivatedAt } from '../types'
-import type { ShellInput, ShellOutput, ShellFailure, ShellSuccess, Deps } from './activate-mediation.spec'
-import type { CoreInput, CoreOutput, CoreFailure, CoreSuccess } from './core/activate-mediation.spec'
-import { parseMediationId } from '../shared/steps/parse-mediation-id'
 import { activateMediationCoreFactory, coreSteps } from './core/activate-mediation'
 
 type ShellSteps = {

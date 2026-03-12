@@ -1,8 +1,5 @@
 // deactivate-mediation shell factory
-import type { Result } from '../../shared/spec'
 import type { MediationId, Mediation, ActiveMediation, DeactivatedMediation, DeactivatedAt } from '../types'
-import type { ShellInput, ShellOutput, ShellFailure, ShellSuccess, Deps } from './deactivate-mediation.spec'
-import type { CoreInput, CoreOutput, CoreFailure, CoreSuccess } from './core/deactivate-mediation.spec'
 import { parseMediationId } from '../shared/steps/parse-mediation-id'
 import { deactivateMediationCoreFactory, coreSteps } from './core/deactivate-mediation'
 
