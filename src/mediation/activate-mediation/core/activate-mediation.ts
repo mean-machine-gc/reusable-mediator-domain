@@ -1,10 +1,6 @@
 // activate-mediation core factory
-import type { Result } from '../../../shared/spec'
 import type { Mediation, ActiveMediation, DraftMediation, DeactivatedMediation, ActivatedAt } from '../../types'
-import type { CoreInput, CoreOutput, CoreFailure, CoreSuccess } from './activate-mediation.spec'
-import { checkActivatableState } from '../../shared/steps/check-activatable-state'
-import { assembleActiveMediation } from '../../shared/steps/assemble-active-mediation'
-import { activateMediationCoreSpec } from './activate-mediation.spec'
+
 
 type CoreSteps = {
   checkActivatableState: (input: Mediation) => Result<DraftMediation | DeactivatedMediation>
