@@ -41,7 +41,7 @@ steps applied to each event on that route.
 
 **Constraint:** Only one Mediation can be Active for a given topic+destination pair.
 
-**Operations:** [Create](mediation/create-mediation) | [Activate](mediation/activate-mediation) | [Deactivate](mediation/deactivate-mediation) | [Mediate](mediation/mediate) | [Handle Event](mediation/handle-event)
+**Operations:** [Create](mediation/create-mediation) | [Activate](mediation/activate-mediation) | [Deactivate](mediation/deactivate-mediation) | [Mediate](mediation/mediate)
 
 ---
 
@@ -74,6 +74,19 @@ captures every delivery attempt with full HTTP response detail for observability
 | **Failed** | All retry attempts exhausted without success |
 
 **Operations:** [Create Dispatch](dispatches/create-dispatch) | [Record Delivery](dispatches/record-delivery)
+
+---
+
+### [Polling](polling/)
+
+Application-level orchestrators that drive the pipeline by fetching batches of
+aggregates in a specific state and invoking domain operations.
+
+| Poller | Picks up | Transitions to |
+|---|---|---|
+| [Poll Received](polling/poll-received) | `received` records | `validated` or `failed` |
+| [Poll Validated](polling/poll-validated) | `validated` records | `mediated` or `failed` (+ dispatches created) |
+| [Poll Dispatches](polling/poll-dispatches) | `to-deliver` / `attempted` dispatches | `delivered`, `attempted`, or `failed` |
 
 ---
 

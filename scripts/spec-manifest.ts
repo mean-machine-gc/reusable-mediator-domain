@@ -53,11 +53,6 @@ export const specManifest: ManifestEntry[] = [
     specPath: '../src/mediation/create-mediation/create-mediation.spec',
     exportName: 'createMediationShellSpec',
   },
-  {
-    name: 'handle-event-service',
-    specPath: '../src/mediation/service/service.spec',
-    exportName: 'mediationServiceSpec',
-  },
   // ── IncomingProcessing ──────────────────────────────────────────────────────
   {
     name: 'receive-event-core',
@@ -119,5 +114,36 @@ export const specManifest: ManifestEntry[] = [
     name: 'record-delivery-shell',
     specPath: '../src/dispatches/record-delivery/record-delivery.spec',
     exportName: 'recordDeliveryShellSpec',
+  },
+  // ── Polling ──────────────────────────────────────────────────────────────────
+  {
+    name: 'classify-validation-results',
+    specPath: '../src/polling/poll-received/steps/classify-validation-results.spec',
+    exportName: 'classifyValidationResultsSpec',
+  },
+  {
+    name: 'mediate-all',
+    specPath: '../src/polling/poll-validated/steps/mediate-all.spec',
+    exportName: 'mediateAllSpec',
+  },
+  {
+    name: 'classify-delivery-results',
+    specPath: '../src/polling/poll-dispatches/steps/classify-delivery-results.spec',
+    exportName: 'classifyDeliveryResultsSpec',
+  },
+  {
+    name: 'poll-received',
+    specPath: '../src/polling/poll-received/poll-received.spec',
+    exportName: 'pollReceivedSpec',
+  },
+  {
+    name: 'poll-validated',
+    specPath: '../src/polling/poll-validated/poll-validated.spec',
+    exportName: 'pollValidatedSpec',
+  },
+  {
+    name: 'poll-dispatches',
+    specPath: '../src/polling/poll-dispatches/poll-dispatches.spec',
+    exportName: 'pollDispatchesSpec',
   },
 ]
