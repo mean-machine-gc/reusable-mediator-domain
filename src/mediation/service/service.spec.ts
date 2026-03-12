@@ -4,6 +4,7 @@ import type { ActiveMediation, Destination, MediationId, Topic } from '../types'
 import { extractEventTypeSpec } from './steps/extract-event-type.spec'
 import { validateEventDataSpec } from './steps/validate-event-data.spec'
 import { mediateAllSpec } from './steps/mediate-all.spec'
+import { evaluateMediateOutcomeSpec } from './steps/evaluate-mediate-outcome.spec'
 import { evaluateServiceSuccessTypeSpec } from './steps/evaluate-success-type.spec'
 
 // ── Output ──────────────────────────────────────────────────────────────────
@@ -28,7 +29,8 @@ export type MediationServiceFn = SpecFn<
     | 'missing_dataschema'
     | 'schema_not_found'
     | 'schema_validation_failed'
-    | 'unknown_transform',
+    | 'unknown_transform'
+    | 'dispatch_failed',
     'events-dispatched' | 'all-skipped' | 'no-mediations'
 >
 
@@ -41,7 +43,9 @@ const steps: StepInfo[] = [
     { name: 'findActiveMediationsByTopic', type: 'dep', description: 'Fetch all active mediations whose topic matches the event type' },
     { name: 'getTransformRegistry', type: 'dep', description: 'Retrieve the transform function registry' },
     { name: 'mediateAll', type: 'step', description: 'Run mediateCore for each mediation and collect results', spec: mediateAllSpec as unknown as Spec<AnyFn> },
-    { name: 'evaluateSuccessType', type: 'step', description: 'Classify outcome based on dispatches and skipped counts', spec: evaluateServiceSuccessTypeSpec as unknown as Spec<AnyFn> },
+    { name: 'evaluateMediateOutcome', type: 'step', description: 'Short-circuit if no dispatches, continue if dispatches exist', spec: evaluateMediateOutcomeSpec as unknown as Spec<AnyFn> },
+    { name: 'dispatchAll', type: 'dep', description: 'Send each processed event to its destination' },
+    { name: 'evaluateSuccessType', type: 'step', description: 'Assemble final result after successful dispatch', spec: evaluateServiceSuccessTypeSpec as unknown as Spec<AnyFn> },
 ]
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -156,6 +160,15 @@ export const mediationServiceSpec: Spec<MediationServiceFn> = {
             examples: [
                 {
                     description: 'fails when a mediation pipeline uses an unknown transform',
+                    whenInput: { event: baseEvent },
+                },
+            ],
+        },
+        dispatch_failed: {
+            description: 'Sending a processed event to its destination failed',
+            examples: [
+                {
+                    description: 'destination endpoint is unreachable',
                     whenInput: { event: baseEvent },
                 },
             ],

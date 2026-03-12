@@ -4,12 +4,14 @@ import type { DispatchEntry, ServiceResult } from '../service.spec'
 import type { CloudEvent } from 'cloudevents'
 
 // ── SpecFn ──────────────────────────────────────────────────────────────────
+// This step is only reached after successful dispatch.
+// It assembles the final ServiceResult with success type 'events-dispatched'.
 
 export type EvaluateServiceSuccessTypeFn = SpecFn<
     { topic: Topic; dispatches: DispatchEntry[]; skipped: MediationId[] },
     ServiceResult,
     never,
-    'events-dispatched' | 'all-skipped' | 'no-mediations'
+    'events-dispatched'
 >
 
 // ── Fixtures ────────────────────────────────────────────────────────────────
@@ -28,7 +30,7 @@ export const evaluateServiceSuccessTypeSpec: Spec<EvaluateServiceSuccessTypeFn> 
     shouldFailWith: {},
     shouldSucceedWith: {
         'events-dispatched': {
-            description: 'At least one mediation produced a dispatch',
+            description: 'Events have been dispatched to their destinations',
             examples: [
                 {
                     description: 'one dispatch, no skips',
@@ -58,65 +60,12 @@ export const evaluateServiceSuccessTypeSpec: Spec<EvaluateServiceSuccessTypeFn> 
                 },
             ],
         },
-        'all-skipped': {
-            description: 'Mediations were found but all filtered out the event',
-            examples: [
-                {
-                    description: 'no dispatches, one skip',
-                    whenInput: {
-                        topic,
-                        dispatches: [],
-                        skipped: ['00000000-0000-0000-0000-000000000002'],
-                    },
-                    then: {
-                        topic,
-                        dispatches: [],
-                        skipped: ['00000000-0000-0000-0000-000000000002'],
-                    },
-                },
-            ],
-        },
-        'no-mediations': {
-            description: 'No active mediations were found for this topic',
-            examples: [
-                {
-                    description: 'no dispatches, no skips',
-                    whenInput: {
-                        topic,
-                        dispatches: [],
-                        skipped: [],
-                    },
-                    then: {
-                        topic,
-                        dispatches: [],
-                        skipped: [],
-                    },
-                },
-            ],
-        },
     },
     shouldAssert: {
         'events-dispatched': {
             'has-dispatches': {
                 description: 'dispatches is non-empty',
                 assert: (_input, output) => output.dispatches.length > 0,
-            },
-        },
-        'all-skipped': {
-            'no-dispatches': {
-                description: 'dispatches is empty',
-                assert: (_input, output) => output.dispatches.length === 0,
-            },
-            'has-skipped': {
-                description: 'skipped is non-empty',
-                assert: (_input, output) => output.skipped.length > 0,
-            },
-        },
-        'no-mediations': {
-            'both-empty': {
-                description: 'dispatches and skipped are both empty',
-                assert: (_input, output) =>
-                    output.dispatches.length === 0 && output.skipped.length === 0,
             },
         },
     },

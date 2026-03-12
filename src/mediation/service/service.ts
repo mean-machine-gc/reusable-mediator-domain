@@ -1,22 +1,30 @@
 // handleEvent — shell factory
-import type { MediationServiceFn } from './service.spec'
+import type { MediationServiceFn, DispatchEntry } from './service.spec'
 import type { ActiveMediation, TransformRegistry } from '../types'
+import type { ExtractEventTypeFn } from './steps/extract-event-type.spec'
+import type { ValidateEventDataFn } from './steps/validate-event-data.spec'
+import type { MediateAllFn } from './steps/mediate-all.spec'
+import type { EvaluateMediateOutcomeFn } from './steps/evaluate-mediate-outcome.spec'
+import type { EvaluateServiceSuccessTypeFn } from './steps/evaluate-success-type.spec'
 import { extractEventType } from './steps/extract-event-type'
 import { validateEventData } from './steps/validate-event-data'
 import { mediateAll } from './steps/mediate-all'
+import { evaluateMediateOutcome } from './steps/evaluate-mediate-outcome'
 import { evaluateServiceSuccessType } from './steps/evaluate-success-type'
 
 type Steps = {
-    extractEventType: typeof extractEventType
-    validateEventData: typeof validateEventData
-    mediateAll: typeof mediateAll
-    evaluateServiceSuccessType: typeof evaluateServiceSuccessType
+    extractEventType: ExtractEventTypeFn['signature']
+    validateEventData: ValidateEventDataFn['signature']
+    mediateAll: MediateAllFn['signature']
+    evaluateMediateOutcome: EvaluateMediateOutcomeFn['signature']
+    evaluateServiceSuccessType: EvaluateServiceSuccessTypeFn['signature']
 }
 
 type Deps = {
     resolveSchema: (dataschemaUri: string) => Promise<object | null>
     findActiveMediationsByTopic: (topic: string) => Promise<ActiveMediation[]>
     getTransformRegistry: () => Promise<TransformRegistry>
+    dispatchAll: (dispatches: DispatchEntry[]) => Promise<void>
 }
 
 const handleEventFactory =
@@ -47,7 +55,27 @@ const handleEventFactory =
         const mediateResult = steps.mediateAll({ event: input.event, mediations, registry })
         if (!mediateResult.ok) return mediateResult as any
 
-        // 7. Classify outcome
+        // 7. Evaluate mediate outcome — short-circuit if nothing to dispatch
+        const outcome = steps.evaluateMediateOutcome({
+            topic: extracted.value.topic,
+            dispatches: mediateResult.value.dispatches,
+            skipped: mediateResult.value.skipped,
+        })
+        if (!outcome.ok) return outcome as any
+
+        if (outcome.value.action === 'done') {
+            const successType = outcome.successType as any
+            return { ok: true, value: outcome.value.result, successType }
+        }
+
+        // 8. Dispatch all processed events to their destinations
+        try {
+            await deps.dispatchAll(outcome.value.dispatches)
+        } catch {
+            return { ok: false, errors: ['dispatch_failed'] }
+        }
+
+        // 9. Assemble final result
         const result = steps.evaluateServiceSuccessType({
             topic: extracted.value.topic,
             dispatches: mediateResult.value.dispatches,
@@ -68,5 +96,6 @@ export const handleEvent = handleEventFactory({
     extractEventType,
     validateEventData,
     mediateAll,
+    evaluateMediateOutcome,
     evaluateServiceSuccessType,
 })

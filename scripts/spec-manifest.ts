@@ -58,4 +58,45 @@ export const specManifest: ManifestEntry[] = [
     specPath: '../src/mediation/service/service.spec',
     exportName: 'mediationServiceSpec',
   },
+  // ── IncomingProcessing ──────────────────────────────────────────────────────
+  {
+    name: 'receive-event-core',
+    specPath: '../src/incoming-processing/receive-event/core/receive-event.spec',
+    exportName: 'receiveEventSpec',
+  },
+  {
+    name: 'receive-event-shell',
+    specPath: '../src/incoming-processing/receive-event/receive-event.spec',
+    exportName: 'receiveEventShellSpec',
+  },
+  {
+    name: 'validate-processing-core',
+    specPath: '../src/incoming-processing/validate-processing/core/validate-processing.spec',
+    exportName: 'validateProcessingSpec',
+  },
+  {
+    name: 'validate-processing-shell',
+    specPath: '../src/incoming-processing/validate-processing/validate-processing.spec',
+    exportName: 'validateProcessingShellSpec',
+  },
+  {
+    name: 'mediate-processing-core',
+    specPath: '../src/incoming-processing/mediate-processing/core/mediate-processing.spec',
+    exportName: 'mediateProcessingSpec',
+  },
+  {
+    name: 'mediate-processing-shell',
+    specPath: '../src/incoming-processing/mediate-processing/mediate-processing.spec',
+    exportName: 'mediateProcessingShellSpec',
+  },
+  {
+    name: 'fail-processing-core',
+    specPath: '../src/incoming-processing/fail-processing/core/fail-processing.spec',
+    exportName: 'failProcessingSpec',
+  },
+  {
+    name: 'fail-processing-shell',
+    specPath: '../src/incoming-processing/fail-processing/fail-processing.spec',
+    exportName: 'failProcessingShellSpec',
+  },
 ]
