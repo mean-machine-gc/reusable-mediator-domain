@@ -21,12 +21,12 @@ Connects a source topic to a destination adapter. Owns the pipeline of operation
 - Only one Mediation can be Active for a given topic+destination pair.
 
 **Commands:**
-- [`createMediation`](create-mediation.spec) — create a new Mediation in Draft state with source topic, destination, and pipeline steps
-- [`updatePipeline`](update-pipeline.spec) — replace the pipeline steps/rules (only in Draft or Deactivated)
-- [`activateMediation`](activate-mediation.spec) — Draft → Active (must verify no other Active Mediation exists for same topic+destination)
-- [`deactivateMediation`](deactivate-mediation.spec) — Active → Deactivated
-- [`deleteMediation`](delete-mediation.spec) — remove permanently (only from Draft or Deactivated)
-- `mediate` — run the pipeline against an incoming event; returns processed event + destination, or nothing if filtered out (only when Active)
+- [`createMediation`](mediation/create-mediation) — create a new Mediation in Draft state with source topic, destination, and pipeline steps
+- `updatePipeline` — replace the pipeline steps/rules (only in Draft or Deactivated)
+- [`activateMediation`](mediation/activate-mediation) — Draft → Active (must verify no other Active Mediation exists for same topic+destination)
+- [`deactivateMediation`](mediation/deactivate-mediation) — Active → Deactivated
+- `deleteMediation` — remove permanently (only from Draft or Deactivated)
+- [`mediate`](mediation/mediate) — run the pipeline against an incoming event; returns processed event + destination, or nothing if filtered out (only when Active)
 
 **Value Objects:**
 - **Pipeline** — ordered sequence of steps (filter, transform, enrich), each with its own rules/configuration
