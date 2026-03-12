@@ -2,7 +2,7 @@ import type { SpecFn, Spec, StepInfo, AnyFn } from '../../../shared/spec-framewo
 import type { CloudEvent } from 'cloudevents'
 import type { FilterRules } from '../../types'
 import { resolveFieldSpec } from './resolve-field.spec'
-import { evaluateConditionStrategyHandlerSpecs } from './evaluate-condition.spec'
+import { evaluateConditionHandlerSpecs } from './evaluate-condition.spec'
 import { composeResultsSpec } from './compose-results.spec'
 
 export type EvaluateFilterStepFn = SpecFn<
@@ -14,7 +14,7 @@ export type EvaluateFilterStepFn = SpecFn<
 
 const steps: StepInfo[] = [
     { name: 'resolveField', type: 'step', description: 'Resolve field value from event', spec: resolveFieldSpec as unknown as Spec<AnyFn> },
-    { name: 'evaluateCondition', type: 'strategy', description: 'Evaluate condition against field value using operator-specific handler', handlers: evaluateConditionStrategyHandlerSpecs },
+    { name: 'evaluateCondition', type: 'strategy', description: 'Evaluate condition against field value using operator-specific handler', handlers: evaluateConditionHandlerSpecs as unknown as Record<string, Spec<AnyFn>> },
     { name: 'composeResults', type: 'step', description: 'Compose boolean results with and/or logic', spec: composeResultsSpec as unknown as Spec<AnyFn> },
 ]
 

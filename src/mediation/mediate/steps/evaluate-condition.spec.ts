@@ -1,4 +1,4 @@
-import type { SpecFn, StrategyFn, Spec, AnyFn } from '../../../shared/spec-framework'
+import type { SpecFn, StrategyFn, Spec } from '../../../shared/spec-framework'
 import type { FilterCondition } from '../../types'
 
 // ── Handler SpecFn (each operator is tested individually) ───────────────────
@@ -358,21 +358,3 @@ export const evaluateConditionHandlerSpecs: Record<FilterCondition['operator'], 
     not_in: notInHandlerSpec,
 }
 
-// ── Strategy handler specs (for StrategyStep in parent factory specs) ───────
-
-export const evaluateConditionStrategyHandlerSpecs = {
-    equals: equalsHandlerSpec,
-    not_equals: notEqualsHandlerSpec,
-    exists: existsHandlerSpec,
-    not_exists: notExistsHandlerSpec,
-    contains: containsHandlerSpec,
-    starts_with: startsWithHandlerSpec,
-    ends_with: endsWithHandlerSpec,
-    regex: regexHandlerSpec,
-    greater_than: greaterThanHandlerSpec,
-    less_than: lessThanHandlerSpec,
-    greater_than_or_equal: greaterThanOrEqualHandlerSpec,
-    less_than_or_equal: lessThanOrEqualHandlerSpec,
-    in: inHandlerSpec,
-    not_in: notInHandlerSpec,
-} satisfies Record<EvaluateConditionStrategyFn['cases'], Spec<EvaluateConditionHandlerFn>> as unknown as Record<EvaluateConditionStrategyFn['cases'], Spec<AnyFn>>
