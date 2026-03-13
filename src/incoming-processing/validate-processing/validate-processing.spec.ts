@@ -1,16 +1,13 @@
 import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
 import { asStepSpec } from '../../shared/spec-framework'
 import type { ValidatedProcessing } from '../types'
-import type { ParseProcessingIdFailures } from '../shared/steps/parse-processing-id.spec'
-import { parseProcessingIdSpec } from '../shared/steps/parse-processing-id.spec'
 import { validateProcessingSpec } from './core/validate-processing.spec'
 
-type ShellInput = { cmd: { processingId: unknown } }
+type ShellInput = { cmd: { processingId: string } }
 
 export type ValidateProcessingShellFn = SpecFn<
     ShellInput,
     ValidatedProcessing,
-    | ParseProcessingIdFailures
     | 'not_found'
     | 'not_in_received_state'
     | 'schema_not_found'
@@ -19,7 +16,6 @@ export type ValidateProcessingShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseProcessingId', type: 'step', description: 'Parse and validate the processing ID', spec: asStepSpec(parseProcessingIdSpec) },
     { name: 'getIncomingProcessingById', type: 'dep', description: 'Load aggregate state from persistence' },
     { name: 'resolveSchema', type: 'dep', description: 'Resolve JSON Schema from registry using dataschemaUri' },
     { name: 'generateTimestamp', type: 'dep', description: 'Generate validated timestamp from clock' },

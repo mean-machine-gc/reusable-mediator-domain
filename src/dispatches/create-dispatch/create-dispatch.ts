@@ -1,12 +1,9 @@
 import type { CreateDispatchShellFn } from './create-dispatch.spec'
 import type { DomainDeps } from '../../domain-deps'
-import type { ParseDispatchIdFn } from '../shared/steps/parse-dispatch-id.spec'
 import type { CreateDispatchFn } from './core/create-dispatch.spec'
-import { parseDispatchId } from '../shared/steps/parse-dispatch-id'
 import { createDispatch as createDispatchCore } from './core/create-dispatch'
 
 type Steps = {
-    parseDispatchId: ParseDispatchIdFn['signature']
     createDispatchCore: CreateDispatchFn['signature']
 }
 
@@ -20,10 +17,7 @@ const createDispatchShellFactory =
     (steps: Steps) =>
     (deps: Deps): CreateDispatchShellFn['asyncSignature'] =>
     async (input) => {
-        const parsed = steps.parseDispatchId(input.cmd.dispatchId)
-        if (!parsed.ok) return parsed as any
-
-        const stateResult = await deps.getDispatchById(parsed.value)
+        const stateResult = await deps.getDispatchById(input.cmd.dispatchId)
         const state = stateResult.value
 
         const createdAtResult = await deps.generateTimestamp()
@@ -31,7 +25,7 @@ const createDispatchShellFactory =
 
         const result = steps.createDispatchCore({
             cmd: {
-                dispatchId: parsed.value,
+                dispatchId: input.cmd.dispatchId,
                 processingId: input.cmd.processingId as any,
                 mediationId: input.cmd.mediationId as any,
                 destination: input.cmd.destination as any,
@@ -48,6 +42,5 @@ const createDispatchShellFactory =
     }
 
 export const _createDispatch = createDispatchShellFactory({
-    parseDispatchId,
     createDispatchCore,
 })

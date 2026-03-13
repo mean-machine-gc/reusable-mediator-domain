@@ -16,6 +16,10 @@ export type {
 }
 
 // Filter primitives
+/**
+ * @minLength 1
+ * @maxLength 512
+ */
 export type FieldPath = string
 export type FieldPathValidations =
   | 'not_a_string'
@@ -25,6 +29,10 @@ export type FieldPathValidations =
   | 'invalid_chars_alphanumeric_hyphens_underscores_and_dots_only'
   | 'script_injection'
 
+/**
+ * @minLength 1
+ * @maxLength 1024
+ */
 export type RegexPattern = string
 export type RegexPatternValidations =
   | 'not_a_string'

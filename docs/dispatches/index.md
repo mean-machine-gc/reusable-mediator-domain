@@ -1,27 +1,25 @@
 ---
 title: Dispatches
-nav_order: 4
+nav_order: 5
 has_children: true
 ---
 
 # Dispatches
 
-The Dispatches aggregate tracks outbound event delivery from the mediator to downstream destinations. Each dispatch represents a single event being sent to a single destination, with full lifecycle tracking from creation through delivery or failure.
-
-Dispatches support retry logic with configurable maximum attempts. Each delivery attempt captures the full HTTP response (status code, headers, body, response time) for observability and debugging.
+Tracks outbound event delivery to each destination with retry logic. Each dispatch captures every delivery attempt with full HTTP response detail for observability.
 
 ## Lifecycle
 
 | State | Description |
 |---|---|
-| **to-deliver** | Dispatch created, awaiting first delivery attempt |
-| **attempted** | At least one failed attempt, retries still available |
-| **delivered** | Successfully delivered to the destination |
-| **failed** | All retry attempts exhausted without success |
+| **To-deliver** | Created from a mediation outcome, awaiting first attempt |
+| **Attempted** | At least one failed attempt, retries still available |
+| **Delivered** | Successfully delivered to the destination |
+| **Failed** | All retry attempts exhausted without success |
 
 ## Operations
 
 | Operation | Description |
 |---|---|
-| [Create Dispatch](create-dispatch) | Create a new dispatch in to-deliver state from a mediation outcome |
-| [Record Delivery](record-delivery) | Record a delivery attempt — transitions to delivered, attempted, or failed |
+| [Create Dispatch](create-dispatch) | Create a new dispatch from a mediation routing outcome |
+| [Record Delivery](record-delivery) | Record a delivery attempt and transition based on result and retry budget |

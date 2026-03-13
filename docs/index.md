@@ -39,8 +39,6 @@ steps applied to each event on that route.
 | **Active** | Accepting and processing events for its topic |
 | **Deactivated** | Paused, no longer processing events |
 
-**Constraint:** Only one Mediation can be Active for a given topic+destination pair.
-
 **Operations:** [Create](mediation/create-mediation) | [Activate](mediation/activate-mediation) | [Deactivate](mediation/deactivate-mediation) | [Mediate](mediation/mediate)
 
 ---
@@ -79,7 +77,7 @@ captures every delivery attempt with full HTTP response detail for observability
 
 ### [Polling](polling/)
 
-Application-level orchestrators that drive the pipeline by fetching batches of
+Scheduler-driven functions that advance the pipeline by fetching batches of
 aggregates in a specific state and invoking domain operations.
 
 | Poller | Picks up | Transitions to |

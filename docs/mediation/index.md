@@ -1,25 +1,26 @@
 ---
 title: Mediation
-nav_order: 2
+nav_order: 3
 has_children: true
 ---
 
 # Mediation
 
-The Mediation aggregate connects a source topic to a destination adapter. It owns the pipeline of operations (filter, transform, enrich) applied to CloudEvents before routing them to third-party webhook endpoints.
+The Mediation aggregate connects a source topic to a destination endpoint. It owns the pipeline of operations (filter, transform, enrich) applied to CloudEvents before routing them to third-party webhook destinations.
 
-**Lifecycle:** Draft &rarr; Active &rarr; Deactivated
+## Lifecycle
 
-**Constraints:**
-- Only one Mediation can be Active for a given topic+destination pair.
-
----
+| State | Description |
+|---|---|
+| **Draft** | Created with pipeline configuration, not yet routing events |
+| **Active** | Accepting and processing events for its topic |
+| **Deactivated** | Paused, no longer processing events |
 
 ## Operations
 
 | Operation | Description |
 |---|---|
-| [Create Mediation](create-mediation) | Create a new Mediation in Draft state with source topic, destination, and pipeline steps |
-| [Activate Mediation](activate-mediation) | Transition a Draft or Deactivated mediation to Active |
-| [Deactivate Mediation](deactivate-mediation) | Transition an Active mediation to Deactivated |
-| [Mediate](mediate) | Run the pipeline against an incoming CloudEvent — filter, transform, and route |
+| [Create Mediation](create-mediation) | Create a new draft mediation with topic, destination, and pipeline |
+| [Activate Mediation](activate-mediation) | Transition a draft or deactivated mediation to active |
+| [Deactivate Mediation](deactivate-mediation) | Pause an active mediation |
+| [Mediate](mediate) | Run an event through a mediation's pipeline |

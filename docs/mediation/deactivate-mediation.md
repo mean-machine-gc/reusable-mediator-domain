@@ -6,7 +6,7 @@ nav_order: 3
 
 # Deactivate Mediation
 
-> Transitions an Active mediation to Deactivated state. The mediation stops processing incoming events but retains its configuration. It can be reactivated later.
+> Pauses an Active mediation so it no longer processes events. The mediation can be reactivated later.
 
 ---
 
@@ -14,9 +14,9 @@ nav_order: 3
 
 | Outcome | When | Result |
 |---|---|---|
-| **mediation-deactivated** | An Active mediation is deactivated | Mediation transitions to Deactivated with a deactivation timestamp. Event processing stops. |
+| **mediation-deactivated** | An active mediation is deactivated | Mediation transitions to Deactivated with a deactivation timestamp |
 
-> The operation is protected by input validation and state guards. No state is changed in any failure case.
+> The operation is protected by state guards. No state is changed in any failure case.
 
 ---
 
@@ -25,7 +25,7 @@ nav_order: 3
 | | |
 |---|---|
 | **Name** | `deactivateMediation` |
-| **Input** | `mediationId` (raw) |
+| **Command** | `mediationId` |
 | **Output** | `DeactivatedMediation` |
 | **Sync/Async** | Async (shell factory) |
 
@@ -37,7 +37,7 @@ nav_order: 3
 
 | Scenario | Given | Then |
 |---|---|---|
-| **Deactivate active mediation** | Active mediation for topic `patient.created`, activated on 2025-01-15. Deactivated on 2025-02-01. | Mediation becomes Deactivated. Deactivation timestamp recorded. Events are no longer processed. Configuration preserved for potential reactivation. |
+| **Deactivate an active mediation** | An active mediation for topic `patient.created` | Mediation becomes deactivated with a deactivation timestamp. Pipeline and other fields preserved. |
 
 ### Failure Cases
 
@@ -45,45 +45,22 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_a_string` | Mediation ID is not a string (e.g. a number, null) | `parseMediationId` step |
-| `empty` | Mediation ID is an empty string | `parseMediationId` step |
-| `too_long_max_64` | Mediation ID exceeds 64 characters | `parseMediationId` step |
-| `not_a_uuid` | Mediation ID is not a valid UUID format | `parseMediationId` step |
-| `script_injection` | Mediation ID contains injection patterns | `parseMediationId` step |
-| `not_active` | Mediation is in Draft or Deactivated state (not active) | `checkDeactivatableState` step |
+| `not_found` | No mediation exists for the given ID | Shell lookup |
+| `not_active` | The mediation is not in active state (draft or already deactivated) | `deactivateMediationCore` step |
 
 ### Assertions
 
 When a mediation is deactivated:
 - Output status is `deactivated`
-- Deactivation timestamp is set from the generated context
-- All other mediation properties (topic, destination, pipeline) are preserved
+- Deactivation timestamp is recorded
+- All other fields (topic, destination, pipeline) are preserved
 
 ---
 
-## Pipeline
+## Pipeline & Decision Table
 
-| # | Name | Type | Description | Failure Codes |
-|---|---|---|---|---|
-| 1 | `parseMediationId` | `STEP` | Parse and validate the mediation ID | `not_a_string`, `empty`, `too_long_max_64`, `not_a_uuid`, `script_injection` |
-| 2 | `findMediation` | `DEP` | Fetch mediation from persistence | -- |
-| 3 | `generateTimestamp` | `DEP` | Generate deactivation timestamp | -- |
-| 4 | `deactivateMediationCore` | `STEP` | Run deactivation core logic | `not_active` |
-| 5 | `saveMediation` | `DEP` | Persist the deactivated mediation | -- |
+For the full pipeline table and decision table, see the auto-generated
+[deactivate-mediation.spec.md](../../src/mediation/deactivate-mediation/deactivate-mediation.spec.md).
 
-> **STEP** — pure, synchronous domain function. No I/O, fully testable in isolation.
-> **DEP** — async infrastructure dependency (persistence or external service).
-
----
-
-## Decision Table
-
-| Scenario | `parseMediationId` :not_a_string | `parseMediationId` :empty | `parseMediationId` :too_long_max_64 | `parseMediationId` :not_a_uuid | `parseMediationId` :script_injection | `core` :not_active | Outcome |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| OK mediation-deactivated | pass | pass | pass | pass | pass | pass | mediation-deactivated |
-| FAIL not_a_string | FAIL | -- | -- | -- | -- | -- | Fails: `not_a_string` |
-| FAIL empty | pass | FAIL | -- | -- | -- | -- | Fails: `empty` |
-| FAIL too_long_max_64 | pass | pass | FAIL | -- | -- | -- | Fails: `too_long_max_64` |
-| FAIL not_a_uuid | pass | pass | pass | FAIL | -- | -- | Fails: `not_a_uuid` |
-| FAIL script_injection | pass | pass | pass | pass | FAIL | -- | Fails: `script_injection` |
-| FAIL not_active | pass | pass | pass | pass | pass | FAIL | Fails: `not_active` |
+> **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **DEP** — infrastructure capability. Injected by the app layer.

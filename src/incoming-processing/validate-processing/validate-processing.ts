@@ -1,12 +1,9 @@
 import type { ValidateProcessingShellFn } from './validate-processing.spec'
 import type { DomainDeps } from '../../domain-deps'
-import type { ParseProcessingIdFn } from '../shared/steps/parse-processing-id.spec'
 import type { ValidateProcessingFn } from './core/validate-processing.spec'
-import { parseProcessingId } from '../shared/steps/parse-processing-id'
 import { validateProcessing as validateProcessingCore } from './core/validate-processing'
 
 type Steps = {
-    parseProcessingId: ParseProcessingIdFn['signature']
     validateProcessingCore: ValidateProcessingFn['signature']
 }
 
@@ -21,10 +18,7 @@ const validateProcessingShellFactory =
     (steps: Steps) =>
     (deps: Deps): ValidateProcessingShellFn['asyncSignature'] =>
     async (input) => {
-        const parsed = steps.parseProcessingId(input.cmd.processingId)
-        if (!parsed.ok) return parsed as any
-
-        const stateResult = await deps.getIncomingProcessingById(parsed.value)
+        const stateResult = await deps.getIncomingProcessingById(input.cmd.processingId)
         if (stateResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
         const schemaResult = await deps.resolveSchema(stateResult.value!.dataschemaUri)
@@ -34,7 +28,7 @@ const validateProcessingShellFactory =
         const validatedAt = validatedAtResult.value
 
         const result = steps.validateProcessingCore({
-            cmd: { processingId: parsed.value },
+            cmd: { processingId: input.cmd.processingId },
             state: stateResult.value!,
             ctx: { schema: schemaResult.value!, validatedAt },
         })
@@ -46,6 +40,5 @@ const validateProcessingShellFactory =
     }
 
 export const _validateProcessing = validateProcessingShellFactory({
-    parseProcessingId,
     validateProcessingCore,
 })

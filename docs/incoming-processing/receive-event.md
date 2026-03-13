@@ -6,7 +6,7 @@ nav_order: 1
 
 # Receive Event
 
-> Accepts an incoming CloudEvent and creates the initial processing record. Extracts the routing topic from the event type and the schema URI from the dataschema attribute, then persists a new aggregate in "received" state.
+> Accepts an inbound CloudEvent and creates a new Incoming Processing record in Received state. Extracts the event's topic and dataschema URI for downstream validation and mediation routing.
 
 ---
 
@@ -14,9 +14,9 @@ nav_order: 1
 
 | Outcome | When | Result |
 |---|---|---|
-| **event-received** | A valid CloudEvent arrives with type and dataschema attributes, and no processing record exists for this ID | A new processing record is created in received state, capturing the event, topic, schema URI, and timestamp |
+| **event-received** | A valid CloudEvent is received with a new processing ID | A ReceivedProcessing record is created with the event, topic, and schema URI |
 
-> The operation is protected by input validation and existence checks. No state is created in any failure case.
+> Command validation happens at the API boundary. The shell receives a typed, validated command.
 
 ---
 
@@ -25,9 +25,9 @@ nav_order: 1
 | | |
 |---|---|
 | **Name** | `receiveEvent` |
-| **Input** | `processingId`, `event` (CloudEvent) |
+| **Command** | `processingId`, `event` (CloudEvent) |
 | **Output** | `ReceivedProcessing` |
-| **Sync/Async** | Async (shell factory with curried dependency injection) |
+| **Sync/Async** | Async (shell factory) |
 
 ---
 
@@ -37,62 +37,34 @@ nav_order: 1
 
 | Scenario | Given | Then |
 |---|---|---|
-| **New event received** | A Patient resource CloudEvent arrives with type `org.openhim.patient.created.v1` and a valid dataschema URI. No processing record exists for this ID. | A processing record is created in received state. The topic is extracted from the event type. The dataschema URI is captured for downstream validation. |
+| **Receive a valid CloudEvent** | A CloudEvent with type `org.openhim.patient.created.v1` and a dataschema URI | ReceivedProcessing created with topic extracted from event type and schema URI preserved |
 
 ### Failure Cases
 
-No state is created in any of the following cases.
+No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_a_string` | Processing ID is not a string | `parseProcessingId` step |
-| `empty` | Processing ID is an empty string | `parseProcessingId` step |
-| `too_long_max_64` | Processing ID exceeds 64 characters | `parseProcessingId` step |
-| `not_a_uuid` | Processing ID is not a valid UUID | `parseProcessingId` step |
-| `script_injection` | Processing ID contains script injection | `parseProcessingId` step |
 | `already_exists` | A processing record already exists for this ID | `receiveEventCore` step |
 | `missing_event_type` | The CloudEvent does not carry a type attribute | `receiveEventCore` step |
 | `missing_dataschema` | The CloudEvent does not carry a dataschema attribute | `receiveEventCore` step |
 
 ### Assertions
 
-When event is received:
-- Output status is "received"
-- Processing ID matches the command
-- Topic is extracted from event type
-- Dataschema URI is extracted from event dataschema
+When an event is received:
+- Output status is `received`
+- Output ID matches the command's processing ID
+- Topic is extracted from the event's type attribute
+- Dataschema URI is extracted from the event's dataschema attribute
 - The original event is preserved unchanged
-- Received timestamp comes from the system clock
+- ReceivedAt timestamp comes from the generated context
 
 ---
 
-## Pipeline
+## Pipeline & Decision Table
 
-| # | Name | Type | Description | Failure Codes |
-|---|---|---|---|---|
-| 1 | `parseProcessingId` | `STEP` | Parse and validate the processing ID | `not_a_string`, `empty`, `too_long_max_64`, `not_a_uuid`, `script_injection` |
-| 2 | `loadState` | `DEP` | Load existing aggregate state from persistence (null if not found) | -- |
-| 3 | `generateReceivedAt` | `DEP` | Generate received timestamp from clock | -- |
-| 4 | `receiveEventCore` | `STEP` | Extract event info and assemble ReceivedProcessing | `already_exists`, `missing_event_type`, `missing_dataschema` |
-| 5 | `save` | `DEP` | Persist the new aggregate | -- |
+For the full pipeline table and decision table, see the auto-generated
+[receive-event.spec.md](../../src/incoming-processing/receive-event/receive-event.spec.md).
 
-> **STEP** — pure, synchronous domain function. No I/O, fully testable in isolation.
-> **DEP** — async infrastructure dependency (persistence, clock).
-
----
-
-## Decision Table
-
-| Scenario | `parseId` | `core` :exists | `core` :type | `core` :schema | Outcome |
-|---|:---:|:---:|:---:|:---:|---|
-| OK event-received | pass | pass | pass | pass | event-received |
-| FAIL not_a_string | FAIL | -- | -- | -- | Fails: `not_a_string` |
-| FAIL empty | FAIL | -- | -- | -- | Fails: `empty` |
-| FAIL too_long_max_64 | FAIL | -- | -- | -- | Fails: `too_long_max_64` |
-| FAIL not_a_uuid | FAIL | -- | -- | -- | Fails: `not_a_uuid` |
-| FAIL script_injection | FAIL | -- | -- | -- | Fails: `script_injection` |
-| FAIL already_exists | pass | FAIL | -- | -- | Fails: `already_exists` |
-| FAIL missing_event_type | pass | pass | FAIL | -- | Fails: `missing_event_type` |
-| FAIL missing_dataschema | pass | pass | pass | FAIL | Fails: `missing_dataschema` |
-
-> Column headers are abbreviated — see Pipeline for full step names and failure codes.
+> **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **DEP** — infrastructure capability. Injected by the app layer.

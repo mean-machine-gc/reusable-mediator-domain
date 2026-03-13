@@ -17,7 +17,7 @@ nav_order: 2
 | **draft-activated** | A mediation in Draft state is activated | Mediation transitions to Active with an activation timestamp |
 | **reactivated** | A previously Deactivated mediation is activated again | Mediation returns to Active with a new activation timestamp |
 
-> The operation is protected by input validation and state guards. No state is changed in any failure case.
+> The operation is protected by state guards. No state is changed in any failure case.
 
 ---
 
@@ -26,7 +26,7 @@ nav_order: 2
 | | |
 |---|---|
 | **Name** | `activateMediation` |
-| **Input** | `mediationId` (raw) |
+| **Command** | `mediationId` |
 | **Output** | `ActiveMediation` |
 | **Sync/Async** | Async (shell factory) |
 
@@ -38,8 +38,8 @@ nav_order: 2
 
 | Scenario | Given | Then |
 |---|---|---|
-| **Activate a draft** | Draft mediation for topic `patient.created` with destination `https://example.com/webhook` | Mediation becomes Active. Activation timestamp recorded. Pipeline is now live. |
-| **Reactivate after deactivation** | Mediation was previously active, then deactivated on 2025-02-01. Now reactivated on 2025-03-01. | Mediation becomes Active again with the new activation timestamp. Previous deactivation history is dropped. |
+| **Activate a draft** | A draft mediation for topic `patient.created` | Mediation becomes active with an activation timestamp |
+| **Reactivate after deactivation** | A previously deactivated mediation | Mediation returns to active with a new activation timestamp |
 
 ### Failure Cases
 
@@ -47,51 +47,25 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_a_string` | Mediation ID is not a string (e.g. a number, null) | `parseMediationId` step |
-| `empty` | Mediation ID is an empty string | `parseMediationId` step |
-| `too_long_max_64` | Mediation ID exceeds 64 characters | `parseMediationId` step |
-| `not_a_uuid` | Mediation ID is not a valid UUID format | `parseMediationId` step |
-| `script_injection` | Mediation ID contains injection patterns | `parseMediationId` step |
-| `already_active` | Mediation is already in Active state | `checkActivatableState` step |
+| `not_found` | No mediation exists for the given ID | Shell lookup |
+| `already_active` | The mediation is already in active state | `activateMediationCore` step |
 
 ### Assertions
 
 When a draft is activated:
 - Output status is `active`
-- Input state was `draft`
-- Activation timestamp is set from the generated context
+- Activation timestamp is recorded
 
 When a mediation is reactivated:
 - Output status is `active`
-- Input state was `deactivated`
-- A fresh activation timestamp replaces the previous one
+- A new activation timestamp replaces the previous one
 
 ---
 
-## Pipeline
+## Pipeline & Decision Table
 
-| # | Name | Type | Description | Failure Codes |
-|---|---|---|---|---|
-| 1 | `parseMediationId` | `STEP` | Parse and validate the mediation ID | `not_a_string`, `empty`, `too_long_max_64`, `not_a_uuid`, `script_injection` |
-| 2 | `findMediation` | `DEP` | Fetch mediation from persistence | -- |
-| 3 | `generateTimestamp` | `DEP` | Generate activation timestamp | -- |
-| 4 | `activateMediationCore` | `STEP` | Run activation core logic | `already_active` |
-| 5 | `saveMediation` | `DEP` | Persist the activated mediation | -- |
+For the full pipeline table and decision table, see the auto-generated
+[activate-mediation.spec.md](../../src/mediation/activate-mediation/activate-mediation.spec.md).
 
-> **STEP** — pure, synchronous domain function. No I/O, fully testable in isolation.
-> **DEP** — async infrastructure dependency (persistence or external service).
-
----
-
-## Decision Table
-
-| Scenario | `parseMediationId` :not_a_string | `parseMediationId` :empty | `parseMediationId` :too_long_max_64 | `parseMediationId` :not_a_uuid | `parseMediationId` :script_injection | `core` :already_active | Outcome |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|---|
-| OK draft-activated | pass | pass | pass | pass | pass | pass | draft-activated |
-| OK reactivated | pass | pass | pass | pass | pass | pass | reactivated |
-| FAIL not_a_string | FAIL | -- | -- | -- | -- | -- | Fails: `not_a_string` |
-| FAIL empty | pass | FAIL | -- | -- | -- | -- | Fails: `empty` |
-| FAIL too_long_max_64 | pass | pass | FAIL | -- | -- | -- | Fails: `too_long_max_64` |
-| FAIL not_a_uuid | pass | pass | pass | FAIL | -- | -- | Fails: `not_a_uuid` |
-| FAIL script_injection | pass | pass | pass | pass | FAIL | -- | Fails: `script_injection` |
-| FAIL already_active | pass | pass | pass | pass | pass | FAIL | Fails: `already_active` |
+> **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **DEP** — infrastructure capability. Injected by the app layer.

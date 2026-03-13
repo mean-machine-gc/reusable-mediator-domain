@@ -1,12 +1,9 @@
 import type { ReceiveEventShellFn } from './receive-event.spec'
 import type { DomainDeps } from '../../domain-deps'
-import type { ParseProcessingIdFn } from '../shared/steps/parse-processing-id.spec'
 import type { ReceiveEventFn } from './core/receive-event.spec'
-import { parseProcessingId } from '../shared/steps/parse-processing-id'
 import { receiveEvent as receiveEventCore } from './core/receive-event'
 
 type Steps = {
-    parseProcessingId: ParseProcessingIdFn['signature']
     receiveEventCore: ReceiveEventFn['signature']
 }
 
@@ -20,17 +17,14 @@ const receiveEventShellFactory =
     (steps: Steps) =>
     (deps: Deps): ReceiveEventShellFn['asyncSignature'] =>
     async (input) => {
-        const parsed = steps.parseProcessingId(input.cmd.processingId)
-        if (!parsed.ok) return parsed as any
-
-        const stateResult = await deps.getIncomingProcessingById(parsed.value)
+        const stateResult = await deps.getIncomingProcessingById(input.cmd.processingId)
         const state = stateResult.value
 
         const receivedAtResult = await deps.generateTimestamp()
         const receivedAt = receivedAtResult.value
 
         const result = steps.receiveEventCore({
-            cmd: { processingId: parsed.value, event: input.cmd.event as any },
+            cmd: { processingId: input.cmd.processingId, event: input.cmd.event as any },
             state,
             ctx: { receivedAt },
         })
@@ -42,6 +36,5 @@ const receiveEventShellFactory =
     }
 
 export const _receiveEvent = receiveEventShellFactory({
-    parseProcessingId,
     receiveEventCore,
 })

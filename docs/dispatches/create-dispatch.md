@@ -6,23 +6,17 @@ nav_order: 1
 
 # Create Dispatch
 
-> Creates a new dispatch aggregate in the to-deliver state, linking a CloudEvent to
-> a specific destination as determined by the mediation outcome.
+> Creates a new Dispatch in To-deliver state from a mediation routing outcome. Links the dispatch to the originating processing record, mediation, and destination.
 
 ---
 
 ## Overview
 
-When a mediation produces routing outcomes, each destination receives its own dispatch.
-The dispatch captures the event, the originating processing and mediation IDs, and
-the target destination URL.
-
 | Outcome | When | Result |
 |---|---|---|
-| **dispatch-created** | No dispatch exists for this ID | A new `ToDeliverDispatch` aggregate is created |
+| **dispatch-created** | A new dispatch is requested for a mediation outcome | A ToDeliverDispatch is created with the event, destination, and a creation timestamp |
 
-> The operation is protected by input validation and an existence check.
-> No state is changed in any failure case.
+> The operation is protected by an idempotency check. No state is changed in any failure case.
 
 ---
 
@@ -43,7 +37,7 @@ the target destination URL.
 
 | Scenario | Given | Then |
 |---|---|---|
-| **Create from mediation outcome** | No dispatch exists for this ID. Command provides processing ID, mediation ID, destination URL, and the CloudEvent. | A new dispatch is created in to-deliver state with all fields populated and a creation timestamp. |
+| **Create a new dispatch** | A mediation routed an event to `https://downstream.example.com/webhook` | Dispatch created in to-deliver state with the event and destination |
 
 ### Failure Cases
 
@@ -51,49 +45,21 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_a_string` | Dispatch ID is not a string | `parseDispatchId` step |
-| `empty` | Dispatch ID is an empty string | `parseDispatchId` step |
-| `too_long_max_64` | Dispatch ID exceeds 64 characters | `parseDispatchId` step |
-| `not_a_uuid` | Dispatch ID is not a valid UUID | `parseDispatchId` step |
-| `script_injection` | Dispatch ID contains script injection | `parseDispatchId` step |
-| `already_exists` | A dispatch already exists for this ID | Core validation |
+| `already_exists` | A dispatch with this ID already exists | `createDispatchCore` step |
 
 ### Assertions
 
 When a dispatch is created:
 - Output status is `to-deliver`
-- Dispatch ID comes from the command
-- Processing ID comes from the command
-- Mediation ID comes from the command
-- Destination comes from the command
-- Event comes from the command
-- CreatedAt comes from the context (clock)
+- The event, destination, processing ID, and mediation ID are preserved from the command
+- A creation timestamp is assigned
 
 ---
 
-## Pipeline
+## Pipeline & Decision Table
 
-| # | Name | Type | Description | Failure Codes |
-|---|---|---|---|---|
-| 1 | `parseDispatchId` | `STEP` | Parse and validate the dispatch ID | `not_a_string`, `empty`, `too_long_max_64`, `not_a_uuid`, `script_injection` |
-| 2 | `loadState` | `DEP` | Load existing aggregate state from persistence (null if not found) | -- |
-| 3 | `generateCreatedAt` | `DEP` | Generate created timestamp from clock | -- |
-| 4 | `createDispatchCore` | `STEP` | Validate state gate and assemble ToDeliverDispatch | `already_exists` |
-| 5 | `save` | `DEP` | Persist the new aggregate | -- |
+For the full pipeline table and decision table, see the auto-generated
+[create-dispatch.spec.md](../../src/dispatches/create-dispatch/create-dispatch.spec.md).
 
-> **STEP** — pure, synchronous domain function. No I/O, fully testable in isolation.
-> **DEP** — async infrastructure dependency (persistence or external service).
-
----
-
-## Decision Table
-
-| Scenario | `parseDispatchId` | `createDispatchCore` | Outcome |
-|---|:---:|:---:|---|
-| OK dispatch-created | pass | pass | `ToDeliverDispatch` — new dispatch created |
-| FAIL not_a_string | FAIL | -- | Fails: `not_a_string` |
-| FAIL empty | FAIL | -- | Fails: `empty` |
-| FAIL too_long_max_64 | FAIL | -- | Fails: `too_long_max_64` |
-| FAIL not_a_uuid | FAIL | -- | Fails: `not_a_uuid` |
-| FAIL script_injection | FAIL | -- | Fails: `script_injection` |
-| FAIL already_exists | pass | FAIL | Fails: `already_exists` |
+> **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **DEP** — infrastructure capability. Injected by the app layer.

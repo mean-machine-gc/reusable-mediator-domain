@@ -1,6 +1,6 @@
-# activate-mediation-core
+# activate-mediation
 
-> Auto-generated from `activate-mediation-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
+> Auto-generated from `activate-mediation.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 > For business-friendly documentation, see `/docs/`.
 
 ---

@@ -1,26 +1,27 @@
 ---
 title: Incoming Processing
-nav_order: 3
+nav_order: 4
 has_children: true
 ---
 
 # Incoming Processing
 
-The Incoming Processing aggregate tracks the lifecycle of an inbound CloudEvent from the moment it arrives through schema validation, mediation, and eventual dispatch. It provides a persistent, inspectable record of every step the system took to handle an event.
+Tracks the lifecycle of an inbound CloudEvent from arrival through schema validation, mediation, and outcome recording. Provides a persistent, inspectable audit trail for every event that enters the system.
 
-**Lifecycle:** Received &rarr; Validated &rarr; Mediated
+## Lifecycle
 
-Any non-terminal state can transition to **Failed** if an error occurs during processing.
-
-**Terminal states:** Mediated, Failed
-
----
+| State | Description |
+|---|---|
+| **Received** | Event accepted, awaiting validation |
+| **Validated** | Schema validation passed, awaiting mediation |
+| **Mediated** | All mediations evaluated, outcomes recorded |
+| **Failed** | An error occurred at any stage (terminal) |
 
 ## Operations
 
 | Operation | Description |
 |---|---|
-| [Receive Event](receive-event) | Accept an incoming CloudEvent and create the initial processing record |
-| [Validate Processing](validate-processing) | Validate event data against its declared JSON Schema |
-| [Mediate Processing](mediate-processing) | Record the outcomes of mediation (dispatched/skipped per mediation) |
-| [Fail Processing](fail-processing) | Transition a non-terminal processing record to failed with a reason |
+| [Receive Event](receive-event) | Accept an inbound CloudEvent and create a processing record |
+| [Validate Processing](validate-processing) | Validate the event data against its declared JSON Schema |
+| [Mediate Processing](mediate-processing) | Record mediation outcomes on the processing record |
+| [Fail Processing](fail-processing) | Transition a processing record to failed with a reason |

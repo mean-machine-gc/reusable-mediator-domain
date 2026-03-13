@@ -1,38 +1,124 @@
 import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
 import { asStepSpec } from '../../shared/spec-framework'
-import type { ActiveMediation, MediationIdValidations } from '../types'
-import { parseMediationIdSpec } from '../shared/steps/parse-mediation-id.spec'
+import type { ActiveMediation, DraftMediation, DeactivatedMediation, Mediation } from '../types'
+import type { DomainDeps } from '../../domain-deps'
+import type { ActivateMediationCommand } from './command/command'
 import { activateMediationCoreSpec } from './core/activate-mediation.spec'
 
-type ShellInput = { cmd: { mediationId: unknown } }
+type ShellInput = { cmd: ActivateMediationCommand }
 
 export type ActivateMediationShellFn = SpecFn<
     ShellInput,
     ActiveMediation,
-    MediationIdValidations | 'already_active',
+    'already_active' | 'not_found',
     'draft-activated' | 'reactivated'
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseMediationId', type: 'step', description: 'Parse and validate the mediation ID', spec: asStepSpec(parseMediationIdSpec) },
     { name: 'getMediationById', type: 'dep', description: 'Fetch mediation from persistence' },
     { name: 'generateTimestamp', type: 'dep', description: 'Generate activation timestamp' },
     { name: 'activateMediationCore', type: 'step', description: 'Run activation core logic', spec: asStepSpec(activateMediationCoreSpec) },
     { name: 'upsertMediation', type: 'dep', description: 'Persist the activated mediation' },
 ]
 
+// ── Test fixtures ────────────────────────────────────────────────────────
+
+const notFoundId = 'a0000000-0000-0000-0000-000000000001'
+const draftId = 'b0000000-0000-0000-0000-000000000001'
+const deactivatedId = 'c0000000-0000-0000-0000-000000000001'
+const fixedTimestamp = new Date('2025-06-15T10:35:00Z')
+const createdAt = new Date('2025-06-15T10:30:00Z')
+
+const draftMediation: DraftMediation = {
+    status: 'draft',
+    id: draftId,
+    topic: 'patient.created',
+    destination: 'https://example.com/webhook',
+    pipeline: [{ type: 'filter', rules: { logic: 'and', conditions: [{ field: 'data.type', operator: 'equals', value: 'patient' }] } }],
+    createdAt,
+}
+
+const deactivatedMediation: DeactivatedMediation = {
+    status: 'deactivated',
+    id: deactivatedId,
+    topic: 'patient.created',
+    destination: 'https://example.com/webhook',
+    pipeline: [{ type: 'filter', rules: { logic: 'and', conditions: [{ field: 'data.type', operator: 'equals', value: 'patient' }] } }],
+    createdAt,
+    activatedAt: new Date('2025-06-15T10:32:00Z'),
+    deactivatedAt: new Date('2025-06-15T10:34:00Z'),
+}
+
+// ── Test deps ────────────────────────────────────────────────────────────
+
+export type ActivateMediationDeps = Pick<DomainDeps, 'getMediationById' | 'generateTimestamp' | 'upsertMediation'>
+
+const mediationStore: Record<string, Mediation> = {
+    [draftId]: draftMediation,
+    [deactivatedId]: deactivatedMediation,
+}
+
+export const testDeps: ActivateMediationDeps = {
+    getMediationById: async (id) =>
+        id in mediationStore
+            ? { ok: true, value: mediationStore[id], successType: ['found'] }
+            : { ok: true, value: null, successType: ['not-found'] },
+    generateTimestamp: async () => ({ ok: true, value: fixedTimestamp, successType: ['generated'] as 'generated'[] }),
+    upsertMediation: async () => ({ ok: true, value: undefined, successType: ['upserted'] as 'upserted'[] }),
+}
+
+// ── Spec ─────────────────────────────────────────────────────────────────
+
 export const activateMediationShellSpec: Spec<ActivateMediationShellFn> = {
     document: true,
     steps,
-    shouldFailWith: {},
+    shouldFailWith: {
+        not_found: {
+            description: 'No mediation aggregate exists for this ID',
+            examples: [
+                {
+                    description: 'rejects when mediation not found',
+                    whenInput: { cmd: { mediationId: notFoundId } },
+                },
+            ],
+        },
+    },
     shouldSucceedWith: {
         'draft-activated': {
             description: 'A draft mediation becomes active',
-            examples: [],
+            examples: [
+                {
+                    description: 'activates a draft mediation',
+                    whenInput: { cmd: { mediationId: draftId } },
+                    then: {
+                        status: 'active',
+                        id: draftId,
+                        topic: 'patient.created',
+                        destination: 'https://example.com/webhook',
+                        pipeline: draftMediation.pipeline,
+                        createdAt,
+                        activatedAt: fixedTimestamp,
+                    },
+                },
+            ],
         },
         'reactivated': {
             description: 'A deactivated mediation becomes active again',
-            examples: [],
+            examples: [
+                {
+                    description: 'reactivates a deactivated mediation',
+                    whenInput: { cmd: { mediationId: deactivatedId } },
+                    then: {
+                        status: 'active',
+                        id: deactivatedId,
+                        topic: 'patient.created',
+                        destination: 'https://example.com/webhook',
+                        pipeline: deactivatedMediation.pipeline,
+                        createdAt,
+                        activatedAt: fixedTimestamp,
+                    },
+                },
+            ],
         },
     },
     shouldAssert: {

@@ -1,6 +1,6 @@
-# mediate-core
+# mediate
 
-> Auto-generated from `mediate-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
+> Auto-generated from `mediate.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 > For business-friendly documentation, see `/docs/`.
 
 ---

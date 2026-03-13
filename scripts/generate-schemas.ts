@@ -38,6 +38,7 @@ function readSource(filePath: string): string {
 function extractTypes(source: string): string {
     const lines = source.split('\n')
     const result: string[] = []
+    const skippedTypes = new Set<string>()
     let i = 0
 
     while (i < lines.length) {
@@ -65,12 +66,34 @@ function extractTypes(source: string): string {
             continue
         }
 
-        // Skip failure unions (type ...Failure = ...)
-        if (line.match(/^export\s+type\s+\w+Failure\s*=/)) {
+        // Skip failure unions (type ...Failure = ...) and validation unions (type ...Validations = ...)
+        if (line.match(/^export\s+type\s+\w+(Failure|Validations)\s*=/)) {
+            const nameMatch = line.match(/^export\s+type\s+(\w+)/)
+            if (nameMatch) skippedTypes.add(nameMatch[1])
             // Skip multi-line union
             i++
             while (i < lines.length && lines[i].match(/^\s*\|/)) i++
             continue
+        }
+
+        // Skip function types (type ... = (...) => ...)
+        if (line.match(/^export\s+type\s+\w+\s*=\s*\(/) || line.match(/^type\s+\w+\s*=\s*\(/)) {
+            const nameMatch = line.match(/(?:export\s+)?type\s+(\w+)/)
+            if (nameMatch) skippedTypes.add(nameMatch[1])
+            i++
+            continue
+        }
+
+        // Skip types that reference a previously skipped type
+        if (line.match(/^(?:export\s+)?type\s+\w+\s*=/)) {
+            const rhs = line.replace(/^(?:export\s+)?type\s+\w+\s*=\s*/, '')
+            const referencesSkipped = [...skippedTypes].some(name => rhs.includes(name))
+            if (referencesSkipped) {
+                const nameMatch = line.match(/(?:export\s+)?type\s+(\w+)/)
+                if (nameMatch) skippedTypes.add(nameMatch[1])
+                i++
+                continue
+            }
         }
 
         // Skip const declarations (parse functions, etc.)
@@ -169,6 +192,20 @@ function postProcess(generated: string): string {
     result = result.replace(
         /const ID = Type\.String\(\{([^}]*)\}\)/,
         `const ID = Type.String({$1,"pattern":"${ID_UUID_PATTERN}"})`
+    )
+
+    // Convert Type.Number({"type":"integer",...}) to Type.Integer({...})
+    result = result.replace(
+        /Type\.Number\(\{([^}]*)\}\)/g,
+        (_match, inner) => {
+            if (!inner.includes('"type":"integer"')) return _match
+            const cleaned = inner
+                .replace(/"type":"integer"/g, '')
+                .replace(/,,/g, ',')
+                .replace(/^,|,$/g, '')
+                .trim()
+            return cleaned ? `Type.Integer({${cleaned}})` : 'Type.Integer()'
+        }
     )
 
     // Remove unsupported format annotations (TypeBox doesn't validate these by default)

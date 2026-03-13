@@ -4,6 +4,12 @@
 // Spec Framework — the shared infrastructure
 // =============================================================================
 
+// -- Cmd ----------------------------------------------------------------------
+// Generic command envelope for the domain API. The command handler routes on
+// `type` and validates `payload` before dispatching to the appropriate shell.
+
+export type Cmd<T extends string = string, P = unknown> = { type: T; payload: P }
+
 // -- Result -------------------------------------------------------------------
 
 export type Result<T, F extends string = string, S extends string = string> =
