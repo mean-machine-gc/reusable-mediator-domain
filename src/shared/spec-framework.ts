@@ -53,12 +53,20 @@ export type AnyStrategyFn = StrategyFn<any, any, any, any, any, any>
 // -- Steps — discriminated union ----------------------------------------------
 // Each step type carries only the fields that belong to it.
 //   step     → has optional spec (for failure inheritance)
+//   safe-dep → wraps a raw dep with parsing/validation; has optional spec (for failure inheritance)
 //   dep      → no spec (infrastructure, tested separately)
 //   strategy → has handlers (Record of handler specs, keyed by case name)
 
 export type StepStep = {
     name: string
     type: 'step'
+    description: string
+    spec?: Spec<AnyFn>
+}
+
+export type SafeDepStep = {
+    name: string
+    type: 'safe-dep'
     description: string
     spec?: Spec<AnyFn>
 }
@@ -76,7 +84,7 @@ export type StrategyStep = {
     handlers: Record<string, Spec<AnyFn>>
 }
 
-export type StepInfo = StepStep | DepStep | StrategyStep
+export type StepInfo = StepStep | SafeDepStep | DepStep | StrategyStep
 
 // -- Examples -----------------------------------------------------------------
 
@@ -181,6 +189,7 @@ export const inheritFromSteps = (steps: StepInfo[]): Record<string, FailGroup<an
     for (const step of steps) {
         switch (step.type) {
             case 'step':
+            case 'safe-dep':
                 if (step.spec) {
                     inheritFromSpec(step.name, step.spec, result)
                 }

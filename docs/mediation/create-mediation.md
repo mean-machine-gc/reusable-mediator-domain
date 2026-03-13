@@ -43,6 +43,11 @@ nav_order: 1
 
 No state is modified in any of the following cases. Command validation failures (`invalid_create_mediation_command`) are handled by the command handler before the shell is invoked.
 
+| Failure | When | Source |
+|---|---|---|
+| `invalid_id` | Generated ID fails schema validation | `safeGenerateId` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
+
 ### Assertions
 
 When a mediation is created:
@@ -58,4 +63,5 @@ For the full pipeline table and decision table, see the auto-generated
 [create-mediation.spec.md](../../src/mediation/create-mediation/create-mediation.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

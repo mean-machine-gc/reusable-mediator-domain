@@ -1,118 +1,107 @@
+import { z } from 'zod'
 import type { CloudEvent } from 'cloudevents'
-import type {
-  MediationId, MediationIdValidations,
-  Topic, TopicValidations,
-  Destination, DestinationValidations,
-} from '../shared/types'
-import type { Timestamp, TimestampValidations } from '../shared/primitives'
+import { MediationId, Topic, Destination } from '../shared/types'
+import { Timestamp } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
-// ── Shared Domain Primitives (re-exported) ──────────────────────────────────
-export type {
-  MediationId, MediationIdValidations,
-  Topic, TopicValidations,
-  Destination, DestinationValidations,
-}
+// ── Re-exports for command schemas ──────────────────────────────────────────
+export { MediationId, Topic, Destination }
 
 // Filter primitives
-/**
- * @minLength 1
- * @maxLength 512
- */
-export type FieldPath = string
-export type FieldPathValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_512'
-  | 'invalid_format_dot_separated_segments'
-  | 'invalid_chars_alphanumeric_hyphens_underscores_and_dots_only'
-  | 'script_injection'
+export const FieldPath = z.string().min(1).max(512)
+export type FieldPath = z.infer<typeof FieldPath>
 
-/**
- * @minLength 1
- * @maxLength 1024
- */
-export type RegexPattern = string
-export type RegexPatternValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_1024'
-  | 'invalid_regex'
-  | 'script_injection'
+export const RegexPattern = z.string().min(1).max(1024)
+export type RegexPattern = z.infer<typeof RegexPattern>
 
 // Temporal
-export type CreatedAt = Timestamp
-export type CreatedAtValidations = TimestampValidations
+export const CreatedAt = Timestamp
+export type CreatedAt = z.infer<typeof CreatedAt>
 
-export type ActivatedAt = Timestamp
-export type ActivatedAtValidations = TimestampValidations
+export const ActivatedAt = Timestamp
+export type ActivatedAt = z.infer<typeof ActivatedAt>
 
-export type DeactivatedAt = Timestamp
-export type DeactivatedAtValidations = TimestampValidations
+export const DeactivatedAt = Timestamp
+export type DeactivatedAt = z.infer<typeof DeactivatedAt>
 
 // ── Filter Conditions ─────────────────────────────────────────────────────────
 
-// Equality
-export type EqualsCondition = { field: FieldPath; operator: 'equals'; value: unknown }
-export type NotEqualsCondition = { field: FieldPath; operator: 'not_equals'; value: unknown }
+export const EqualsCondition = z.object({ field: FieldPath, operator: z.literal('equals'), value: z.unknown() })
+export type EqualsCondition = z.infer<typeof EqualsCondition>
 
-// Presence
-export type ExistsCondition = { field: FieldPath; operator: 'exists' }
-export type NotExistsCondition = { field: FieldPath; operator: 'not_exists' }
+export const NotEqualsCondition = z.object({ field: FieldPath, operator: z.literal('not_equals'), value: z.unknown() })
+export type NotEqualsCondition = z.infer<typeof NotEqualsCondition>
 
-// String
-export type ContainsCondition = { field: FieldPath; operator: 'contains'; value: string }
-export type StartsWithCondition = { field: FieldPath; operator: 'starts_with'; value: string }
-export type EndsWithCondition = { field: FieldPath; operator: 'ends_with'; value: string }
-export type RegexCondition = { field: FieldPath; operator: 'regex'; pattern: RegexPattern }
+export const ExistsCondition = z.object({ field: FieldPath, operator: z.literal('exists') })
+export type ExistsCondition = z.infer<typeof ExistsCondition>
 
-// Comparison
-export type GreaterThanCondition = { field: FieldPath; operator: 'greater_than'; value: number }
-export type LessThanCondition = { field: FieldPath; operator: 'less_than'; value: number }
-export type GreaterThanOrEqualCondition = { field: FieldPath; operator: 'greater_than_or_equal'; value: number }
-export type LessThanOrEqualCondition = { field: FieldPath; operator: 'less_than_or_equal'; value: number }
+export const NotExistsCondition = z.object({ field: FieldPath, operator: z.literal('not_exists') })
+export type NotExistsCondition = z.infer<typeof NotExistsCondition>
 
-// Collection
-export type InCondition = { field: FieldPath; operator: 'in'; values: unknown[] }
-export type NotInCondition = { field: FieldPath; operator: 'not_in'; values: unknown[] }
+export const ContainsCondition = z.object({ field: FieldPath, operator: z.literal('contains'), value: z.string() })
+export type ContainsCondition = z.infer<typeof ContainsCondition>
 
-export type FilterCondition =
-  | EqualsCondition
-  | NotEqualsCondition
-  | ExistsCondition
-  | NotExistsCondition
-  | ContainsCondition
-  | StartsWithCondition
-  | EndsWithCondition
-  | RegexCondition
-  | GreaterThanCondition
-  | LessThanCondition
-  | GreaterThanOrEqualCondition
-  | LessThanOrEqualCondition
-  | InCondition
-  | NotInCondition
+export const StartsWithCondition = z.object({ field: FieldPath, operator: z.literal('starts_with'), value: z.string() })
+export type StartsWithCondition = z.infer<typeof StartsWithCondition>
+
+export const EndsWithCondition = z.object({ field: FieldPath, operator: z.literal('ends_with'), value: z.string() })
+export type EndsWithCondition = z.infer<typeof EndsWithCondition>
+
+export const RegexCondition = z.object({ field: FieldPath, operator: z.literal('regex'), pattern: RegexPattern })
+export type RegexCondition = z.infer<typeof RegexCondition>
+
+export const GreaterThanCondition = z.object({ field: FieldPath, operator: z.literal('greater_than'), value: z.number() })
+export type GreaterThanCondition = z.infer<typeof GreaterThanCondition>
+
+export const LessThanCondition = z.object({ field: FieldPath, operator: z.literal('less_than'), value: z.number() })
+export type LessThanCondition = z.infer<typeof LessThanCondition>
+
+export const GreaterThanOrEqualCondition = z.object({ field: FieldPath, operator: z.literal('greater_than_or_equal'), value: z.number() })
+export type GreaterThanOrEqualCondition = z.infer<typeof GreaterThanOrEqualCondition>
+
+export const LessThanOrEqualCondition = z.object({ field: FieldPath, operator: z.literal('less_than_or_equal'), value: z.number() })
+export type LessThanOrEqualCondition = z.infer<typeof LessThanOrEqualCondition>
+
+export const InCondition = z.object({ field: FieldPath, operator: z.literal('in'), values: z.array(z.unknown()) })
+export type InCondition = z.infer<typeof InCondition>
+
+export const NotInCondition = z.object({ field: FieldPath, operator: z.literal('not_in'), values: z.array(z.unknown()) })
+export type NotInCondition = z.infer<typeof NotInCondition>
+
+export const FilterCondition = z.discriminatedUnion('operator', [
+  EqualsCondition,
+  NotEqualsCondition,
+  ExistsCondition,
+  NotExistsCondition,
+  ContainsCondition,
+  StartsWithCondition,
+  EndsWithCondition,
+  RegexCondition,
+  GreaterThanCondition,
+  LessThanCondition,
+  GreaterThanOrEqualCondition,
+  LessThanOrEqualCondition,
+  InCondition,
+  NotInCondition,
+])
+export type FilterCondition = z.infer<typeof FilterCondition>
 
 // ── Filter Rules ──────────────────────────────────────────────────────────────
 
-export type FilterRules = {
-  logic: 'and' | 'or'
-  conditions: FilterCondition[]
-}
-
-export type FilterRulesValidations =
-  | 'not_an_object'
-  | 'missing_logic'
-  | 'invalid_logic'
-  | 'missing_conditions'
-  | 'conditions_not_an_array'
-  | 'conditions_empty'
-  | 'invalid_condition'
+export const FilterRules = z.object({
+  logic: z.union([z.literal('and'), z.literal('or')]),
+  conditions: z.array(FilterCondition),
+})
+export type FilterRules = z.infer<typeof FilterRules>
 
 // ── Transform & Enrich Rules ─────────────────────────────────────────────────
 
-export type TransformRules = string[]
-export type EnrichRules = Record<string, unknown>
+export const TransformRules = z.array(z.string())
+export type TransformRules = z.infer<typeof TransformRules>
+
+export const EnrichRules = z.record(z.string(), z.unknown())
+export type EnrichRules = z.infer<typeof EnrichRules>
 
 // ── Transform Registry (runtime) ────────────────────────────────────────────
 
@@ -121,49 +110,59 @@ export type TransformRegistry = Record<string, TransformFn>
 
 // ── Pipeline ──────────────────────────────────────────────────────────────────
 
-export type FilterStep = { type: 'filter'; rules: FilterRules }
-export type TransformStep = { type: 'transform'; rules: TransformRules }
-export type EnrichStep = { type: 'enrich'; rules: EnrichRules }
+export const FilterStep = z.object({ type: z.literal('filter'), rules: FilterRules })
+export type FilterStep = z.infer<typeof FilterStep>
 
-export type PipelineStep = FilterStep | TransformStep | EnrichStep
+export const TransformStep = z.object({ type: z.literal('transform'), rules: TransformRules })
+export type TransformStep = z.infer<typeof TransformStep>
 
-export type Pipeline = PipelineStep[]
+export const EnrichStep = z.object({ type: z.literal('enrich'), rules: EnrichRules })
+export type EnrichStep = z.infer<typeof EnrichStep>
 
-export type PipelineValidations =
-  | 'not_an_array'
-  | 'empty'
-  | 'invalid_step'
+export const PipelineStep = z.discriminatedUnion('type', [FilterStep, TransformStep, EnrichStep])
+export type PipelineStep = z.infer<typeof PipelineStep>
+
+export const Pipeline = z.array(PipelineStep).min(1)
+export type Pipeline = z.infer<typeof Pipeline>
 
 // ── Mediation Aggregate ───────────────────────────────────────────────────────
 
-export type DraftMediation = {
-  status: 'draft'
-  id: MediationId
-  topic: Topic
-  destination: Destination
-  pipeline: Pipeline
-  createdAt: CreatedAt
-}
+export const DraftMediation = z.object({
+  status: z.literal('draft'),
+  id: MediationId,
+  topic: Topic,
+  destination: Destination,
+  pipeline: Pipeline,
+  createdAt: CreatedAt,
+})
+export type DraftMediation = z.infer<typeof DraftMediation>
 
-export type ActiveMediation = {
-  status: 'active'
-  id: MediationId
-  topic: Topic
-  destination: Destination
-  pipeline: Pipeline
-  createdAt: CreatedAt
-  activatedAt: ActivatedAt
-}
+export const ActiveMediation = z.object({
+  status: z.literal('active'),
+  id: MediationId,
+  topic: Topic,
+  destination: Destination,
+  pipeline: Pipeline,
+  createdAt: CreatedAt,
+  activatedAt: ActivatedAt,
+})
+export type ActiveMediation = z.infer<typeof ActiveMediation>
 
-export type DeactivatedMediation = {
-  status: 'deactivated'
-  id: MediationId
-  topic: Topic
-  destination: Destination
-  pipeline: Pipeline
-  createdAt: CreatedAt
-  activatedAt: ActivatedAt
-  deactivatedAt: DeactivatedAt
-}
+export const DeactivatedMediation = z.object({
+  status: z.literal('deactivated'),
+  id: MediationId,
+  topic: Topic,
+  destination: Destination,
+  pipeline: Pipeline,
+  createdAt: CreatedAt,
+  activatedAt: ActivatedAt,
+  deactivatedAt: DeactivatedAt,
+})
+export type DeactivatedMediation = z.infer<typeof DeactivatedMediation>
 
-export type Mediation = DraftMediation | ActiveMediation | DeactivatedMediation
+export const Mediation = z.discriminatedUnion('status', [
+  DraftMediation,
+  ActiveMediation,
+  DeactivatedMediation,
+])
+export type Mediation = z.infer<typeof Mediation>

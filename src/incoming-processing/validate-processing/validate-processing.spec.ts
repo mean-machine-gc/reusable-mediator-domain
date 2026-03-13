@@ -2,6 +2,9 @@ import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
 import { asStepSpec } from '../../shared/spec-framework'
 import type { ValidatedProcessing } from '../types'
 import { validateProcessingSpec } from './core/validate-processing.spec'
+import { safeGetIncomingProcessingByIdSpec } from '../safe-get-incoming-processing-by-id.spec'
+import { safeGenerateTimestampSpec } from '../../shared/safe-generate-timestamp.spec'
+import { safeResolveSchemaSpec } from '../../shared/safe-resolve-schema.spec'
 
 type ShellInput = { cmd: { processingId: string } }
 
@@ -16,9 +19,9 @@ export type ValidateProcessingShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'getIncomingProcessingById', type: 'dep', description: 'Load aggregate state from persistence' },
-    { name: 'resolveSchema', type: 'dep', description: 'Resolve JSON Schema from registry using dataschemaUri' },
-    { name: 'generateTimestamp', type: 'dep', description: 'Generate validated timestamp from clock' },
+    { name: 'safeGetIncomingProcessingById', type: 'safe-dep', description: 'Fetch and validate incoming processing from persistence', spec: asStepSpec(safeGetIncomingProcessingByIdSpec) },
+    { name: 'safeResolveSchema', type: 'safe-dep', description: 'Resolve and validate JSON Schema from registry', spec: asStepSpec(safeResolveSchemaSpec) },
+    { name: 'safeGenerateTimestamp', type: 'safe-dep', description: 'Generate and validate validated timestamp', spec: asStepSpec(safeGenerateTimestampSpec) },
     { name: 'validateProcessingCore', type: 'step', description: 'Validate event data against schema and transition to validated', spec: asStepSpec(validateProcessingSpec) },
     { name: 'upsertIncomingProcessing', type: 'dep', description: 'Persist the updated aggregate' },
 ]

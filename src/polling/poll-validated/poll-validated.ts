@@ -6,9 +6,11 @@ import { mediateAll } from './steps/mediate-all'
 import { _createDispatch } from '../../dispatches/create-dispatch/create-dispatch'
 import { _mediateProcessing } from '../../incoming-processing/mediate-processing/mediate-processing'
 import { _failProcessing } from '../../incoming-processing/fail-processing/fail-processing'
+import { _safeGenerateId } from '../../shared/safe-generate-id'
 
 type Steps = {
     mediateAll: MediateAllFn['signature']
+    safeGenerateId: typeof _safeGenerateId
     createDispatch: typeof _createDispatch
     mediateProcessing: typeof _mediateProcessing
     failProcessing: typeof _failProcessing
@@ -29,6 +31,7 @@ type Deps = {
 const pollValidatedFactory =
     (steps: Steps) =>
     (deps: Deps): PollValidatedFn['asyncSignature'] => {
+        const generateId = steps.safeGenerateId(deps.generateId)
         const doCreateDispatch = steps.createDispatch({
             getDispatchById: deps.getDispatchById,
             generateTimestamp: deps.generateTimestamp,
@@ -76,7 +79,8 @@ const pollValidatedFactory =
 
                     for (const outcome of outcomes) {
                         if (outcome.result === 'dispatched') {
-                            const dispatchIdResult = await deps.generateId()
+                            const dispatchIdResult = await generateId()
+                            if (!dispatchIdResult.ok) throw new Error(dispatchIdResult.errors.join(', '))
 
                             await doCreateDispatch({
                                 cmd: {
@@ -114,6 +118,7 @@ const pollValidatedFactory =
 
 export const _pollValidated = pollValidatedFactory({
     mediateAll,
+    safeGenerateId: _safeGenerateId,
     createDispatch: _createDispatch,
     mediateProcessing: _mediateProcessing,
     failProcessing: _failProcessing,

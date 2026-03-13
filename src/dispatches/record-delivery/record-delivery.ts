@@ -2,8 +2,12 @@ import type { RecordDeliveryShellFn } from './record-delivery.spec'
 import type { DomainDeps } from '../../domain-deps'
 import type { RecordDeliveryFn } from './core/record-delivery.spec'
 import { recordDelivery as recordDeliveryCore } from './core/record-delivery'
+import { _safeGetDispatchById } from '../safe-get-dispatch-by-id'
+import { _safeDeliver } from '../safe-deliver'
 
-type Steps = {
+type ShellSteps = {
+    safeGetDispatchById: typeof _safeGetDispatchById
+    safeDeliver: typeof _safeDeliver
     recordDeliveryCore: RecordDeliveryFn['signature']
 }
 
@@ -15,13 +19,18 @@ type Deps = {
 }
 
 const recordDeliveryShellFactory =
-    (steps: Steps) =>
-    (deps: Deps): RecordDeliveryShellFn['asyncSignature'] =>
-    async (input) => {
-        const stateResult = await deps.getDispatchById(input.cmd.dispatchId)
+    (steps: ShellSteps) =>
+    (deps: Deps): RecordDeliveryShellFn['asyncSignature'] => {
+    const getDispatchById = steps.safeGetDispatchById(deps.getDispatchById)
+    const deliver = steps.safeDeliver(deps.deliver)
+
+    return async (input) => {
+        const stateResult = await getDispatchById(input.cmd.dispatchId)
+        if (!stateResult.ok) return stateResult as any
         if (stateResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
-        const attemptResult = await deps.deliver(stateResult.value!)
+        const attemptResult = await deliver(stateResult.value!)
+        if (!attemptResult.ok) return attemptResult as any
         const maxAttemptsResult = await deps.getMaxAttempts()
 
         const result = steps.recordDeliveryCore({
@@ -35,7 +44,10 @@ const recordDeliveryShellFactory =
 
         return { ok: true, value: result.value, successType: result.successType }
     }
+    }
 
 export const _recordDelivery = recordDeliveryShellFactory({
+    safeGetDispatchById: _safeGetDispatchById,
+    safeDeliver: _safeDeliver,
     recordDeliveryCore,
 })

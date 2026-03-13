@@ -9,8 +9,8 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `getDispatchById` | `DEP` | Load existing aggregate state from persistence (null if not found) | -- |
-| 2 | `generateTimestamp` | `DEP` | Generate created timestamp from clock | -- |
+| 1 | `safeGetDispatchById` | `SAFE-DEP` | Fetch and validate dispatch from persistence | `invalid_dispatch` |
+| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate created timestamp | `invalid_timestamp` |
 | 3 | `createDispatchCore` | `STEP` | Validate state gate and assemble ToDeliverDispatch | `already_exists` |
 | 4 | `upsertDispatch` | `DEP` | Persist the new aggregate | -- |
 
@@ -18,7 +18,9 @@
 
 ## Decision Table
 
-| Scenario | `createDispatchCore` :already_exists | Outcome |
-| --- | :---: | --- |
-| OK dispatch-created | pass | dispatch-created |
-| FAIL already_exists | FAIL | Fails: `already_exists` |
+| Scenario | `safeGetDispatchById` :invalid_dispatch | `safeGenerateTimestamp` :invalid_timestamp | `createDispatchCore` :already_exists | Outcome |
+| --- | :---: | :---: | :---: | --- |
+| OK dispatch-created | pass | pass | pass | dispatch-created |
+| FAIL invalid_dispatch | FAIL | -- | -- | Fails: `invalid_dispatch` |
+| FAIL invalid_timestamp | pass | FAIL | -- | Fails: `invalid_timestamp` |
+| FAIL already_exists | pass | pass | FAIL | Fails: `already_exists` |

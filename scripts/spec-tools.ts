@@ -12,7 +12,7 @@ import type { Spec, StepInfo, StrategyStep } from '../src/shared/spec-framework'
 export type FlatConstraint = {
     step: string
     failure: string
-    type: 'step' | 'dep' | 'strategy'
+    type: 'step' | 'safe-dep' | 'dep' | 'strategy'
 }
 
 export type StrategyTable = {
@@ -38,11 +38,12 @@ export function flattenSpec(spec: any): FlatTable {
         for (const step of spec.steps as StepInfo[]) {
             switch (step.type) {
                 case 'step':
+                case 'safe-dep':
                     if (step.spec) {
                         const stepColumns = flattenAtomicSpec(step.name, step.spec)
-                        columns.push(...stepColumns)
+                        columns.push(...stepColumns.map(c => ({ ...c, type: step.type as FlatConstraint['type'] })))
                     } else {
-                        columns.push({ step: step.name, failure: `(${step.name})`, type: 'step' })
+                        columns.push({ step: step.name, failure: `(${step.name})`, type: step.type })
                     }
                     break
 
@@ -99,7 +100,7 @@ function flattenAtomicSpec(stepName: string, spec: any): FlatConstraint[] {
     if (spec.steps) {
         // Composed spec — recurse
         for (const step of spec.steps as StepInfo[]) {
-            if (step.type === 'step' && step.spec) {
+            if ((step.type === 'step' || step.type === 'safe-dep') && step.spec) {
                 const nested = flattenAtomicSpec(step.name, step.spec)
                 for (const entry of nested) {
                     result.push({ ...entry, step: `${stepName}.${entry.step}` })
@@ -254,6 +255,12 @@ export function toStepTable(spec: any): string {
         switch (step.type) {
             case 'step':
                 typeStr = '`STEP`'
+                if (step.spec) {
+                    failures = Object.keys(step.spec.shouldFailWith || {})
+                }
+                break
+            case 'safe-dep':
+                typeStr = '`SAFE-DEP`'
                 if (step.spec) {
                     failures = Object.keys(step.spec.shouldFailWith || {})
                 }

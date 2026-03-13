@@ -2,8 +2,12 @@ import type { CreateDispatchShellFn } from './create-dispatch.spec'
 import type { DomainDeps } from '../../domain-deps'
 import type { CreateDispatchFn } from './core/create-dispatch.spec'
 import { createDispatch as createDispatchCore } from './core/create-dispatch'
+import { _safeGetDispatchById } from '../safe-get-dispatch-by-id'
+import { _safeGenerateTimestamp } from '../../shared/safe-generate-timestamp'
 
-type Steps = {
+type ShellSteps = {
+    safeGetDispatchById: typeof _safeGetDispatchById
+    safeGenerateTimestamp: typeof _safeGenerateTimestamp
     createDispatchCore: CreateDispatchFn['signature']
 }
 
@@ -14,13 +18,18 @@ type Deps = {
 }
 
 const createDispatchShellFactory =
-    (steps: Steps) =>
-    (deps: Deps): CreateDispatchShellFn['asyncSignature'] =>
-    async (input) => {
-        const stateResult = await deps.getDispatchById(input.cmd.dispatchId)
+    (steps: ShellSteps) =>
+    (deps: Deps): CreateDispatchShellFn['asyncSignature'] => {
+    const getDispatchById = steps.safeGetDispatchById(deps.getDispatchById)
+    const generateTimestamp = steps.safeGenerateTimestamp(deps.generateTimestamp)
+
+    return async (input) => {
+        const stateResult = await getDispatchById(input.cmd.dispatchId)
+        if (!stateResult.ok) return stateResult as any
         const state = stateResult.value
 
-        const createdAtResult = await deps.generateTimestamp()
+        const createdAtResult = await generateTimestamp()
+        if (!createdAtResult.ok) return createdAtResult as any
         const createdAt = createdAtResult.value
 
         const result = steps.createDispatchCore({
@@ -40,7 +49,10 @@ const createDispatchShellFactory =
 
         return { ok: true, value: result.value, successType: result.successType }
     }
+    }
 
 export const _createDispatch = createDispatchShellFactory({
+    safeGetDispatchById: _safeGetDispatchById,
+    safeGenerateTimestamp: _safeGenerateTimestamp,
     createDispatchCore,
 })

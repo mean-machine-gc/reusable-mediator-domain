@@ -1,119 +1,112 @@
+import { z } from 'zod'
 import type { CloudEvent } from 'cloudevents'
-import type {
-  ProcessingId, ProcessingIdValidations,
-  MediationId,
-  Topic,
-  Destination,
-} from '../shared/types'
-import type { Timestamp, TimestampValidations } from '../shared/primitives'
+import { ProcessingId, MediationId, Topic, Destination } from '../shared/types'
+import { Timestamp } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
-// ── Shared Domain Primitives (re-exported) ──────────────────────────────────
-export type { ProcessingId, ProcessingIdValidations }
+// ── Re-exports ──────────────────────────────────────────────────────────────
+export { ProcessingId }
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
 
 // Schema
-/**
- * @minLength 1
- * @maxLength 2048
- */
-export type DataschemaUri = string
-export type DataschemaUriValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_2048'
-  | 'invalid_format_url'
-  | 'script_injection'
+export const DataschemaUri = z.string().min(1).max(2048)
+export type DataschemaUri = z.infer<typeof DataschemaUri>
 
 // Failure reason
-/**
- * @minLength 1
- * @maxLength 4096
- */
-export type ProcessingFailureReason = string
-export type ProcessingFailureReasonValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_4096'
+export const ProcessingFailureReason = z.string().min(1).max(4096)
+export type ProcessingFailureReason = z.infer<typeof ProcessingFailureReason>
 
 // Temporal
-export type ReceivedAt = Timestamp
-export type ReceivedAtValidations = TimestampValidations
+export const ReceivedAt = Timestamp
+export type ReceivedAt = z.infer<typeof ReceivedAt>
 
-export type ValidatedAt = Timestamp
-export type ValidatedAtValidations = TimestampValidations
+export const ValidatedAt = Timestamp
+export type ValidatedAt = z.infer<typeof ValidatedAt>
 
-export type MediatedAt = Timestamp
-export type MediatedAtValidations = TimestampValidations
+export const MediatedAt = Timestamp
+export type MediatedAt = z.infer<typeof MediatedAt>
 
-export type FailedAt = Timestamp
-export type FailedAtValidations = TimestampValidations
+export const FailedAt = Timestamp
+export type FailedAt = z.infer<typeof FailedAt>
+
+// ── CloudEvent schema ───────────────────────────────────────────────────────
+
+const CloudEventSchema = z.custom<CloudEvent>((v) => typeof v === 'object' && v !== null)
 
 // ── Mediation Outcome ───────────────────────────────────────────────────────
 
-export type DispatchedOutcome = {
-  result: 'dispatched'
-  mediationId: MediationId
-  destination: Destination
-  event: CloudEvent
-}
+export const DispatchedOutcome = z.object({
+  result: z.literal('dispatched'),
+  mediationId: MediationId,
+  destination: Destination,
+  event: CloudEventSchema,
+})
+export type DispatchedOutcome = z.infer<typeof DispatchedOutcome>
 
-export type SkippedOutcome = {
-  result: 'skipped'
-  mediationId: MediationId
-  destination: Destination
-}
+export const SkippedOutcome = z.object({
+  result: z.literal('skipped'),
+  mediationId: MediationId,
+  destination: Destination,
+})
+export type SkippedOutcome = z.infer<typeof SkippedOutcome>
 
-export type MediationOutcome = DispatchedOutcome | SkippedOutcome
+export const MediationOutcome = z.discriminatedUnion('result', [DispatchedOutcome, SkippedOutcome])
+export type MediationOutcome = z.infer<typeof MediationOutcome>
 
 // ── IncomingProcessing Aggregate ────────────────────────────────────────────
 
-export type ReceivedProcessing = {
-  status: 'received'
-  id: ProcessingId
-  event: CloudEvent
-  topic: Topic
-  dataschemaUri: DataschemaUri
-  receivedAt: ReceivedAt
-}
+export const ReceivedProcessing = z.object({
+  status: z.literal('received'),
+  id: ProcessingId,
+  event: CloudEventSchema,
+  topic: Topic,
+  dataschemaUri: DataschemaUri,
+  receivedAt: ReceivedAt,
+})
+export type ReceivedProcessing = z.infer<typeof ReceivedProcessing>
 
-export type ValidatedProcessing = {
-  status: 'validated'
-  id: ProcessingId
-  event: CloudEvent
-  topic: Topic
-  dataschemaUri: DataschemaUri
-  receivedAt: ReceivedAt
-  validatedAt: ValidatedAt
-}
+export const ValidatedProcessing = z.object({
+  status: z.literal('validated'),
+  id: ProcessingId,
+  event: CloudEventSchema,
+  topic: Topic,
+  dataschemaUri: DataschemaUri,
+  receivedAt: ReceivedAt,
+  validatedAt: ValidatedAt,
+})
+export type ValidatedProcessing = z.infer<typeof ValidatedProcessing>
 
-export type MediatedProcessing = {
-  status: 'mediated'
-  id: ProcessingId
-  event: CloudEvent
-  topic: Topic
-  dataschemaUri: DataschemaUri
-  receivedAt: ReceivedAt
-  validatedAt: ValidatedAt
-  mediatedAt: MediatedAt
-  outcomes: MediationOutcome[]
-}
+export const MediatedProcessing = z.object({
+  status: z.literal('mediated'),
+  id: ProcessingId,
+  event: CloudEventSchema,
+  topic: Topic,
+  dataschemaUri: DataschemaUri,
+  receivedAt: ReceivedAt,
+  validatedAt: ValidatedAt,
+  mediatedAt: MediatedAt,
+  outcomes: z.array(MediationOutcome),
+})
+export type MediatedProcessing = z.infer<typeof MediatedProcessing>
 
-export type FailedProcessing = {
-  status: 'failed'
-  id: ProcessingId
-  event: CloudEvent
-  topic: Topic
-  dataschemaUri: DataschemaUri
-  receivedAt: ReceivedAt
-  failedAt: FailedAt
-  reason: ProcessingFailureReason
-}
+export const FailedProcessing = z.object({
+  status: z.literal('failed'),
+  id: ProcessingId,
+  event: CloudEventSchema,
+  topic: Topic,
+  dataschemaUri: DataschemaUri,
+  receivedAt: ReceivedAt,
+  failedAt: FailedAt,
+  reason: ProcessingFailureReason,
+})
+export type FailedProcessing = z.infer<typeof FailedProcessing>
 
-export type IncomingProcessing =
-  | ReceivedProcessing
-  | ValidatedProcessing
-  | MediatedProcessing
-  | FailedProcessing
+export const IncomingProcessing = z.discriminatedUnion('status', [
+  ReceivedProcessing,
+  ValidatedProcessing,
+  MediatedProcessing,
+  FailedProcessing,
+])
+export type IncomingProcessing = z.infer<typeof IncomingProcessing>

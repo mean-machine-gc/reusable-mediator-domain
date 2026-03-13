@@ -45,10 +45,13 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_found` | No processing record exists for this ID | Shell lookup |
-| `schema_not_found` | No schema could be resolved for the event's dataschema URI | Shell lookup |
+| `invalid_incoming_processing` | Fetched processing data fails schema validation | `safeGetIncomingProcessingById` safe dep |
+| `invalid_schema` | Resolved schema fails JSON Schema meta-validation | `safeResolveSchema` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `not_in_received_state` | The processing record is not in received state | `validateProcessingCore` step |
 | `schema_validation_failed` | Event data does not conform to the resolved schema | `validateProcessingCore` step |
+| `not_found` | No processing record exists for this ID | Own validation |
+| `schema_not_found` | No schema could be resolved for the event's dataschema URI | Own validation |
 
 ### Assertions
 
@@ -65,4 +68,5 @@ For the full pipeline table and decision table, see the auto-generated
 [validate-processing.spec.md](../../src/incoming-processing/validate-processing/validate-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

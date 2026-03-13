@@ -45,6 +45,8 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
+| `invalid_incoming_processing` | Fetched processing data fails schema validation | `safeGetIncomingProcessingById` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `already_exists` | A processing record already exists for this ID | `receiveEventCore` step |
 | `missing_event_type` | The CloudEvent does not carry a type attribute | `receiveEventCore` step |
 | `missing_dataschema` | The CloudEvent does not carry a dataschema attribute | `receiveEventCore` step |
@@ -67,4 +69,5 @@ For the full pipeline table and decision table, see the auto-generated
 [receive-event.spec.md](../../src/incoming-processing/receive-event/receive-event.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

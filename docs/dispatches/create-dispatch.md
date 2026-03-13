@@ -45,6 +45,8 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
+| `invalid_dispatch` | Fetched dispatch data fails schema validation | `safeGetDispatchById` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `already_exists` | A dispatch with this ID already exists | `createDispatchCore` step |
 
 ### Assertions
@@ -62,4 +64,5 @@ For the full pipeline table and decision table, see the auto-generated
 [create-dispatch.spec.md](../../src/dispatches/create-dispatch/create-dispatch.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

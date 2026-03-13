@@ -3,6 +3,8 @@ import { asStepSpec } from '../../shared/spec-framework'
 import type { ToDeliverDispatch, Dispatch } from '../types'
 import type { DomainDeps } from '../../domain-deps'
 import { createDispatchSpec } from './core/create-dispatch.spec'
+import { safeGetDispatchByIdSpec } from '../safe-get-dispatch-by-id.spec'
+import { safeGenerateTimestampSpec } from '../../shared/safe-generate-timestamp.spec'
 import { CloudEvent } from 'cloudevents'
 
 type ShellInput = {
@@ -23,8 +25,8 @@ export type CreateDispatchShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'getDispatchById', type: 'dep', description: 'Load existing aggregate state from persistence (null if not found)' },
-    { name: 'generateTimestamp', type: 'dep', description: 'Generate created timestamp from clock' },
+    { name: 'safeGetDispatchById', type: 'safe-dep', description: 'Fetch and validate dispatch from persistence', spec: asStepSpec(safeGetDispatchByIdSpec) },
+    { name: 'safeGenerateTimestamp', type: 'safe-dep', description: 'Generate and validate created timestamp', spec: asStepSpec(safeGenerateTimestampSpec) },
     { name: 'createDispatchCore', type: 'step', description: 'Validate state gate and assemble ToDeliverDispatch', spec: asStepSpec(createDispatchSpec) },
     { name: 'upsertDispatch', type: 'dep', description: 'Persist the new aggregate' },
 ]

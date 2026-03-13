@@ -4,6 +4,8 @@ import type { DraftMediation, FilterStep } from '../types'
 import type { DomainDeps } from '../../domain-deps'
 import type { CreateMediationCommand } from './command/command'
 import { assembleDraftMediationSpec } from '../shared/steps/assemble-draft-mediation.spec'
+import { safeGenerateIdSpec } from '../../shared/safe-generate-id.spec'
+import { safeGenerateTimestampSpec } from '../../shared/safe-generate-timestamp.spec'
 
 type ShellInput = { cmd: CreateMediationCommand }
 
@@ -15,8 +17,8 @@ export type CreateMediationShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'generateId', type: 'dep', description: 'Generate a unique mediation ID' },
-    { name: 'generateTimestamp', type: 'dep', description: 'Generate creation timestamp' },
+    { name: 'safeGenerateId', type: 'safe-dep', description: 'Generate and validate a unique mediation ID', spec: asStepSpec(safeGenerateIdSpec) },
+    { name: 'safeGenerateTimestamp', type: 'safe-dep', description: 'Generate and validate creation timestamp', spec: asStepSpec(safeGenerateTimestampSpec) },
     { name: 'assembleDraftMediation', type: 'step', description: 'Assemble the draft mediation', spec: asStepSpec(assembleDraftMediationSpec) },
     { name: 'upsertMediation', type: 'dep', description: 'Persist the new mediation' },
 ]

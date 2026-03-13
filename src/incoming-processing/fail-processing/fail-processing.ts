@@ -2,8 +2,12 @@ import type { FailProcessingShellFn } from './fail-processing.spec'
 import type { DomainDeps } from '../../domain-deps'
 import type { FailProcessingFn } from './core/fail-processing.spec'
 import { failProcessing as failProcessingCore } from './core/fail-processing'
+import { _safeGetIncomingProcessingById } from '../safe-get-incoming-processing-by-id'
+import { _safeGenerateTimestamp } from '../../shared/safe-generate-timestamp'
 
-type Steps = {
+type ShellSteps = {
+    safeGetIncomingProcessingById: typeof _safeGetIncomingProcessingById
+    safeGenerateTimestamp: typeof _safeGenerateTimestamp
     failProcessingCore: FailProcessingFn['signature']
 }
 
@@ -14,13 +18,18 @@ type Deps = {
 }
 
 const failProcessingShellFactory =
-    (steps: Steps) =>
-    (deps: Deps): FailProcessingShellFn['asyncSignature'] =>
-    async (input) => {
-        const stateResult = await deps.getIncomingProcessingById(input.cmd.processingId)
+    (steps: ShellSteps) =>
+    (deps: Deps): FailProcessingShellFn['asyncSignature'] => {
+    const getIncomingProcessingById = steps.safeGetIncomingProcessingById(deps.getIncomingProcessingById)
+    const generateTimestamp = steps.safeGenerateTimestamp(deps.generateTimestamp)
+
+    return async (input) => {
+        const stateResult = await getIncomingProcessingById(input.cmd.processingId)
+        if (!stateResult.ok) return stateResult as any
         if (stateResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
-        const failedAtResult = await deps.generateTimestamp()
+        const failedAtResult = await generateTimestamp()
+        if (!failedAtResult.ok) return failedAtResult as any
         const failedAt = failedAtResult.value
 
         const result = steps.failProcessingCore({
@@ -34,7 +43,10 @@ const failProcessingShellFactory =
 
         return { ok: true, value: result.value, successType: result.successType }
     }
+    }
 
 export const _failProcessing = failProcessingShellFactory({
+    safeGetIncomingProcessingById: _safeGetIncomingProcessingById,
+    safeGenerateTimestamp: _safeGenerateTimestamp,
     failProcessingCore,
 })

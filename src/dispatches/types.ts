@@ -1,157 +1,136 @@
+import { z } from 'zod'
 import type { CloudEvent } from 'cloudevents'
-import type {
-  ProcessingId,
-  MediationId,
-  Destination,
-} from '../shared/types'
-import type { ID, IDValidations, Timestamp, TimestampValidations } from '../shared/primitives'
+import { ProcessingId, MediationId, Destination } from '../shared/types'
+import { ID, Timestamp } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
 
 // Identifiers
-export type DispatchId = ID
-export type DispatchIdValidations = IDValidations
+export const DispatchId = ID
+export type DispatchId = z.infer<typeof DispatchId>
 
 // Numeric domain values
-/**
- * @minimum 0
- * @type integer
- */
-export type AttemptCount = number
-export type AttemptCountValidations =
-  | 'not_a_number'
-  | 'not_an_integer'
-  | 'negative'
+export const AttemptCount = z.number().int().min(0)
+export type AttemptCount = z.infer<typeof AttemptCount>
 
-/**
- * @minimum 100
- * @maximum 599
- * @type integer
- */
-export type StatusCode = number
-export type StatusCodeValidations =
-  | 'not_a_number'
-  | 'not_an_integer'
-  | 'out_of_range_min_100_max_599'
+export const StatusCode = z.number().int().min(100).max(599)
+export type StatusCode = z.infer<typeof StatusCode>
 
-/**
- * @minimum 0
- */
-export type ResponseTimeMs = number
-export type ResponseTimeMsValidations =
-  | 'not_a_number'
-  | 'negative'
+export const ResponseTimeMs = z.number().min(0)
+export type ResponseTimeMs = z.infer<typeof ResponseTimeMs>
 
 // Descriptive strings
-/**
- * @maxLength 65536
- */
-export type ResponseBody = string
-export type ResponseBodyValidations =
-  | 'not_a_string'
-  | 'too_long_max_65536'
+export const ResponseBody = z.string().max(65536)
+export type ResponseBody = z.infer<typeof ResponseBody>
 
-/**
- * @minLength 1
- * @maxLength 4096
- */
-export type DeliveryError = string
-export type DeliveryErrorValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_4096'
+export const DeliveryError = z.string().min(1).max(4096)
+export type DeliveryError = z.infer<typeof DeliveryError>
 
 // Structured
-export type ResponseHeaders = Record<string, string>
-export type ResponseHeadersValidations =
-  | 'not_an_object'
+export const ResponseHeaders = z.record(z.string(), z.string())
+export type ResponseHeaders = z.infer<typeof ResponseHeaders>
 
 // Temporal
-export type CreatedAt = Timestamp
-export type CreatedAtValidations = TimestampValidations
+export const CreatedAt = Timestamp
+export type CreatedAt = z.infer<typeof CreatedAt>
 
-export type DeliveredAt = Timestamp
-export type DeliveredAtValidations = TimestampValidations
+export const DeliveredAt = Timestamp
+export type DeliveredAt = z.infer<typeof DeliveredAt>
 
-export type FailedAt = Timestamp
-export type FailedAtValidations = TimestampValidations
+export const FailedAt = Timestamp
+export type FailedAt = z.infer<typeof FailedAt>
 
-export type AttemptedAt = Timestamp
-export type AttemptedAtValidations = TimestampValidations
+export const AttemptedAt = Timestamp
+export type AttemptedAt = z.infer<typeof AttemptedAt>
 
 // ── Delivery Attempt ────────────────────────────────────────────────────────
 
-export type SuccessfulAttempt = {
-  result: 'successful'
-  attemptedAt: AttemptedAt
-  statusCode: StatusCode
-  responseBody: ResponseBody
-  responseHeaders: ResponseHeaders
-  responseTimeMs: ResponseTimeMs
-}
+export const SuccessfulAttempt = z.object({
+  result: z.literal('successful'),
+  attemptedAt: AttemptedAt,
+  statusCode: StatusCode,
+  responseBody: ResponseBody,
+  responseHeaders: ResponseHeaders,
+  responseTimeMs: ResponseTimeMs,
+})
+export type SuccessfulAttempt = z.infer<typeof SuccessfulAttempt>
 
-export type FailedAttempt = {
-  result: 'failed'
-  attemptedAt: AttemptedAt
-  statusCode: StatusCode
-  responseBody: ResponseBody
-  responseHeaders: ResponseHeaders
-  responseTimeMs: ResponseTimeMs
-  error: DeliveryError
-}
+export const FailedAttempt = z.object({
+  result: z.literal('failed'),
+  attemptedAt: AttemptedAt,
+  statusCode: StatusCode,
+  responseBody: ResponseBody,
+  responseHeaders: ResponseHeaders,
+  responseTimeMs: ResponseTimeMs,
+  error: DeliveryError,
+})
+export type FailedAttempt = z.infer<typeof FailedAttempt>
 
-export type DeliveryAttempt = SuccessfulAttempt | FailedAttempt
+export const DeliveryAttempt = z.discriminatedUnion('result', [SuccessfulAttempt, FailedAttempt])
+export type DeliveryAttempt = z.infer<typeof DeliveryAttempt>
 
 // ── Dispatch Aggregate ──────────────────────────────────────────────────────
 
-export type ToDeliverDispatch = {
-  status: 'to-deliver'
-  id: DispatchId
-  processingId: ProcessingId
-  mediationId: MediationId
-  destination: Destination
-  event: CloudEvent
-  createdAt: CreatedAt
-}
+const CloudEventSchema = z.custom<CloudEvent>((v) => typeof v === 'object' && v !== null)
 
-export type AttemptedDispatch = {
-  status: 'attempted'
-  id: DispatchId
-  processingId: ProcessingId
-  mediationId: MediationId
-  destination: Destination
-  event: CloudEvent
-  createdAt: CreatedAt
-  attempts: DeliveryAttempt[]
-  attemptCount: AttemptCount
-}
+export const ToDeliverDispatch = z.object({
+  status: z.literal('to-deliver'),
+  id: DispatchId,
+  processingId: ProcessingId,
+  mediationId: MediationId,
+  destination: Destination,
+  event: CloudEventSchema,
+  createdAt: CreatedAt,
+})
+export type ToDeliverDispatch = z.infer<typeof ToDeliverDispatch>
 
-export type DeliveredDispatch = {
-  status: 'delivered'
-  id: DispatchId
-  processingId: ProcessingId
-  mediationId: MediationId
-  destination: Destination
-  event: CloudEvent
-  createdAt: CreatedAt
-  attempts: DeliveryAttempt[]
-  attemptCount: AttemptCount
-  deliveredAt: DeliveredAt
-}
+export const AttemptedDispatch = z.object({
+  status: z.literal('attempted'),
+  id: DispatchId,
+  processingId: ProcessingId,
+  mediationId: MediationId,
+  destination: Destination,
+  event: CloudEventSchema,
+  createdAt: CreatedAt,
+  attempts: z.array(DeliveryAttempt),
+  attemptCount: AttemptCount,
+})
+export type AttemptedDispatch = z.infer<typeof AttemptedDispatch>
 
-export type FailedDispatch = {
-  status: 'failed'
-  id: DispatchId
-  processingId: ProcessingId
-  mediationId: MediationId
-  destination: Destination
-  event: CloudEvent
-  createdAt: CreatedAt
-  attempts: DeliveryAttempt[]
-  attemptCount: AttemptCount
-  failedAt: FailedAt
-}
+export const DeliveredDispatch = z.object({
+  status: z.literal('delivered'),
+  id: DispatchId,
+  processingId: ProcessingId,
+  mediationId: MediationId,
+  destination: Destination,
+  event: CloudEventSchema,
+  createdAt: CreatedAt,
+  attempts: z.array(DeliveryAttempt),
+  attemptCount: AttemptCount,
+  deliveredAt: DeliveredAt,
+})
+export type DeliveredDispatch = z.infer<typeof DeliveredDispatch>
 
-export type Dispatch = ToDeliverDispatch | AttemptedDispatch | DeliveredDispatch | FailedDispatch
+export const FailedDispatch = z.object({
+  status: z.literal('failed'),
+  id: DispatchId,
+  processingId: ProcessingId,
+  mediationId: MediationId,
+  destination: Destination,
+  event: CloudEventSchema,
+  createdAt: CreatedAt,
+  attempts: z.array(DeliveryAttempt),
+  attemptCount: AttemptCount,
+  failedAt: FailedAt,
+})
+export type FailedDispatch = z.infer<typeof FailedDispatch>
+
+export const Dispatch = z.discriminatedUnion('status', [
+  ToDeliverDispatch,
+  AttemptedDispatch,
+  DeliveredDispatch,
+  FailedDispatch,
+])
+export type Dispatch = z.infer<typeof Dispatch>

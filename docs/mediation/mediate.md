@@ -68,4 +68,5 @@ For the full pipeline table and decision table, see the auto-generated
 [mediate.spec.md](../../src/mediation/mediate/core/mediate.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

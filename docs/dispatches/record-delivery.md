@@ -49,8 +49,10 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_found` | No dispatch exists for the given ID | Shell lookup |
+| `invalid_dispatch` | Fetched dispatch data fails schema validation | `safeGetDispatchById` safe dep |
+| `invalid_delivery_attempt` | HTTP delivery result fails DeliveryAttempt schema validation | `safeDeliver` safe dep |
 | `already_terminal` | Dispatch is already delivered or failed | `recordDeliveryCore` step |
+| `not_found` | No dispatch exists for the given ID | Own validation |
 
 ### Assertions
 
@@ -78,4 +80,5 @@ For the full pipeline table and decision table, see the auto-generated
 [record-delivery.spec.md](../../src/dispatches/record-delivery/record-delivery.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

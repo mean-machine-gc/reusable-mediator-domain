@@ -9,8 +9,8 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `getIncomingProcessingById` | `DEP` | Load aggregate state from persistence | -- |
-| 2 | `generateTimestamp` | `DEP` | Generate failed timestamp from clock | -- |
+| 1 | `safeGetIncomingProcessingById` | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
+| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate failed timestamp | `invalid_timestamp` |
 | 3 | `failProcessingCore` | `STEP` | Validate state gate and transition to failed | `already_terminal` |
 | 4 | `upsertIncomingProcessing` | `DEP` | Persist the updated aggregate | -- |
 
@@ -18,8 +18,10 @@
 
 ## Decision Table
 
-| Scenario | `failProcessingCore` :already_terminal | `(own)` :not_found | Outcome |
-| --- | :---: | :---: | --- |
-| OK processing-failed | pass | pass | processing-failed |
-| FAIL already_terminal | FAIL | -- | Fails: `already_terminal` |
-| FAIL not_found | pass | FAIL | Fails: `not_found` |
+| Scenario | `safeGetIncomingProcessingById` :invalid_incoming_processing | `safeGenerateTimestamp` :invalid_timestamp | `failProcessingCore` :already_terminal | `(own)` :not_found | Outcome |
+| --- | :---: | :---: | :---: | :---: | --- |
+| OK processing-failed | pass | pass | pass | pass | processing-failed |
+| FAIL invalid_incoming_processing | FAIL | -- | -- | -- | Fails: `invalid_incoming_processing` |
+| FAIL invalid_timestamp | pass | FAIL | -- | -- | Fails: `invalid_timestamp` |
+| FAIL already_terminal | pass | pass | FAIL | -- | Fails: `already_terminal` |
+| FAIL not_found | pass | pass | pass | FAIL | Fails: `not_found` |

@@ -2,7 +2,7 @@ import type { SpecFn, Spec } from './shared/spec-framework'
 import type { IncomingProcessing } from './incoming-processing/types'
 import type { Dispatch, DeliveryAttempt } from './dispatches/types'
 import type { Mediation, ActiveMediation, TransformRegistry } from './mediation/types'
-import { parseId, parseTimestamp } from './shared/primitives'
+import { ID, Timestamp } from './shared/primitives'
 
 // ── id generation ─────────────────────────────────────────────────────────
 
@@ -20,7 +20,7 @@ export const generateIdSpec: Spec<GenerateIdFn> = {
         generated: {
             'value-is-valid-id': {
                 description: 'Value is a valid ID (passes parseId)',
-                assert: (_input, output) => parseId(output, 'generated').ok === true,
+                assert: (_input, output) => ID.safeParse(output).success,
             },
         },
     },
@@ -42,7 +42,7 @@ export const generateTimestampSpec: Spec<GenerateTimestampFn> = {
         generated: {
             'value-is-valid-timestamp': {
                 description: 'Value is a valid Timestamp (passes parseTimestamp)',
-                assert: (_input, output) => parseTimestamp(output, 'generated').ok === true,
+                assert: (_input, output) => Timestamp.safeParse(output).success,
             },
         },
     },

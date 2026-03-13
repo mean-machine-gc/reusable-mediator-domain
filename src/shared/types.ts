@@ -1,38 +1,19 @@
-import type { ID, IDValidations } from './primitives'
+import { z } from 'zod'
+import { ID } from './primitives'
 
 // ── Shared Domain Primitives ─────────────────────────────────────────────────
 // Primitives used across aggregate boundaries.
 
 // Identifiers
-export type ProcessingId = ID
-export type ProcessingIdValidations = IDValidations
+export const ProcessingId = ID
+export type ProcessingId = z.infer<typeof ProcessingId>
 
-export type MediationId = ID
-export type MediationIdValidations = IDValidations
+export const MediationId = ID
+export type MediationId = z.infer<typeof MediationId>
 
 // Routing
-/**
- * @minLength 2
- * @maxLength 256
- */
-export type Topic = string
-export type TopicValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_short_min_2'
-  | 'too_long_max_256'
-  | 'invalid_format_dot_separated_segments'
-  | 'invalid_chars_alphanumeric_hyphens_and_dots_only'
-  | 'script_injection'
+export const Topic = z.string().min(2).max(256)
+export type Topic = z.infer<typeof Topic>
 
-/**
- * @minLength 1
- * @maxLength 2048
- */
-export type Destination = string
-export type DestinationValidations =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_2048'
-  | 'invalid_format_url'
-  | 'script_injection'
+export const Destination = z.string().min(1).max(2048)
+export type Destination = z.infer<typeof Destination>

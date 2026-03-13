@@ -11,6 +11,8 @@ import type {
 } from '../types'
 import type { DomainDeps } from '../../domain-deps'
 import { recordDeliverySpec } from './core/record-delivery.spec'
+import { safeGetDispatchByIdSpec } from '../safe-get-dispatch-by-id.spec'
+import { safeDeliverSpec } from '../safe-deliver.spec'
 import { CloudEvent } from 'cloudevents'
 
 type ShellInput = {
@@ -30,8 +32,8 @@ export type RecordDeliveryShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'getDispatchById', type: 'dep', description: 'Load aggregate state from persistence' },
-    { name: 'deliver', type: 'dep', description: 'Attempt HTTP delivery to destination, returns DeliveryAttempt' },
+    { name: 'safeGetDispatchById', type: 'safe-dep', description: 'Fetch and validate dispatch from persistence', spec: asStepSpec(safeGetDispatchByIdSpec) },
+    { name: 'safeDeliver', type: 'safe-dep', description: 'Attempt HTTP delivery and validate DeliveryAttempt result', spec: asStepSpec(safeDeliverSpec) },
     { name: 'getMaxAttempts', type: 'dep', description: 'Retrieve the max attempts configuration' },
     { name: 'recordDeliveryCore', type: 'step', description: 'Evaluate attempt result, transition state accordingly', spec: asStepSpec(recordDeliverySpec) },
     { name: 'upsertDispatch', type: 'dep', description: 'Persist the updated aggregate' },

@@ -47,8 +47,10 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_found` | No processing record exists for this ID | Shell lookup |
+| `invalid_incoming_processing` | Fetched processing data fails schema validation | `safeGetIncomingProcessingById` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `not_in_validated_state` | The processing record is not in validated state | `mediateProcessingCore` step |
+| `not_found` | No processing record exists for this ID | Own validation |
 
 ### Assertions
 
@@ -65,4 +67,5 @@ For the full pipeline table and decision table, see the auto-generated
 [mediate-processing.spec.md](../../src/incoming-processing/mediate-processing/mediate-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

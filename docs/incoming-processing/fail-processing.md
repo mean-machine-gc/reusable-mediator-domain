@@ -46,8 +46,10 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_found` | No processing record exists for this ID | Shell lookup |
+| `invalid_incoming_processing` | Fetched processing data fails schema validation | `safeGetIncomingProcessingById` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `already_terminal` | The processing record is already in failed state | `failProcessingCore` step |
+| `not_found` | No processing record exists for this ID | Own validation |
 
 ### Assertions
 
@@ -64,4 +66,5 @@ For the full pipeline table and decision table, see the auto-generated
 [fail-processing.spec.md](../../src/incoming-processing/fail-processing/fail-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.

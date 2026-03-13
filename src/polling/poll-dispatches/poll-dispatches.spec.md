@@ -17,8 +17,10 @@
 
 ## Decision Table
 
-| Scenario | `recordDelivery.recordDeliveryCore` :already_terminal | Outcome |
-| --- | :---: | --- |
-| OK empty-batch | pass | empty-batch |
-| OK batch-processed | pass | batch-processed |
-| FAIL already_terminal | FAIL | Fails: `already_terminal` |
+| Scenario | `recordDelivery.safeGetDispatchById` :invalid_dispatch | `recordDelivery.safeDeliver` :invalid_delivery_attempt | `recordDelivery.recordDeliveryCore` :already_terminal | Outcome |
+| --- | :---: | :---: | :---: | --- |
+| OK empty-batch | pass | pass | pass | empty-batch |
+| OK batch-processed | pass | pass | pass | batch-processed |
+| FAIL invalid_dispatch | FAIL | -- | -- | Fails: `invalid_dispatch` |
+| FAIL invalid_delivery_attempt | pass | FAIL | -- | Fails: `invalid_delivery_attempt` |
+| FAIL already_terminal | pass | pass | FAIL | Fails: `already_terminal` |

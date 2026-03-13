@@ -5,6 +5,7 @@ import { mediateAllSpec } from './steps/mediate-all.spec'
 import { createDispatchShellSpec } from '../../dispatches/create-dispatch/create-dispatch.spec'
 import { mediateProcessingShellSpec } from '../../incoming-processing/mediate-processing/mediate-processing.spec'
 import { failProcessingShellSpec } from '../../incoming-processing/fail-processing/fail-processing.spec'
+import { safeGenerateIdSpec } from '../../shared/safe-generate-id.spec'
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ const steps: StepInfo[] = [
     { name: 'findActiveMediationsByTopic', type: 'dep', description: 'Find all active mediations matching a topic' },
     { name: 'getTransformRegistry', type: 'dep', description: 'Retrieve the transform function registry' },
     { name: 'mediateAll', type: 'step', description: 'Run all mediations for an event, collect outcomes', spec: asStepSpec(mediateAllSpec) },
-    { name: 'generateId', type: 'dep', description: 'Generate a unique dispatch ID for each routed result' },
+    { name: 'safeGenerateId', type: 'safe-dep', description: 'Generate and validate a unique dispatch ID', spec: asStepSpec(safeGenerateIdSpec) },
     { name: 'createDispatch', type: 'step', description: 'Create a dispatch aggregate for a routed mediation result', spec: asStepSpec(createDispatchShellSpec) },
     { name: 'mediateProcessing', type: 'step', description: 'Transition processing record to mediated with outcomes', spec: asStepSpec(mediateProcessingShellSpec) },
     { name: 'failProcessing', type: 'step', description: 'Transition a record to failed state on error', spec: asStepSpec(failProcessingShellSpec) },

@@ -4,6 +4,8 @@ import type { ActiveMediation, DraftMediation, DeactivatedMediation, Mediation }
 import type { DomainDeps } from '../../domain-deps'
 import type { ActivateMediationCommand } from './command/command'
 import { activateMediationCoreSpec } from './core/activate-mediation.spec'
+import { safeGetMediationByIdSpec } from '../safe-get-mediation-by-id.spec'
+import { safeGenerateTimestampSpec } from '../../shared/safe-generate-timestamp.spec'
 
 type ShellInput = { cmd: ActivateMediationCommand }
 
@@ -15,8 +17,8 @@ export type ActivateMediationShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'getMediationById', type: 'dep', description: 'Fetch mediation from persistence' },
-    { name: 'generateTimestamp', type: 'dep', description: 'Generate activation timestamp' },
+    { name: 'safeGetMediationById', type: 'safe-dep', description: 'Fetch and validate mediation from persistence', spec: asStepSpec(safeGetMediationByIdSpec) },
+    { name: 'safeGenerateTimestamp', type: 'safe-dep', description: 'Generate and validate activation timestamp', spec: asStepSpec(safeGenerateTimestampSpec) },
     { name: 'activateMediationCore', type: 'step', description: 'Run activation core logic', spec: asStepSpec(activateMediationCoreSpec) },
     { name: 'upsertMediation', type: 'dep', description: 'Persist the activated mediation' },
 ]

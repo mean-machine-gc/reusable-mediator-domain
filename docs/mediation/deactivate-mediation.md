@@ -45,8 +45,10 @@ No state is modified in any of the following cases.
 
 | Failure | When | Source |
 |---|---|---|
-| `not_found` | No mediation exists for the given ID | Shell lookup |
+| `invalid_mediation` | Fetched mediation data fails schema validation | `safeGetMediationById` safe dep |
+| `invalid_timestamp` | Generated timestamp fails validation | `safeGenerateTimestamp` safe dep |
 | `not_active` | The mediation is not in active state (draft or already deactivated) | `deactivateMediationCore` step |
+| `not_found` | No mediation exists for the given ID | Own validation |
 
 ### Assertions
 
@@ -63,4 +65,5 @@ For the full pipeline table and decision table, see the auto-generated
 [deactivate-mediation.spec.md](../../src/mediation/deactivate-mediation/deactivate-mediation.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
+> **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
 > **DEP** — infrastructure capability. Injected by the app layer.
