@@ -67,7 +67,7 @@ When a mediation is reactivated:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[activate-mediation.spec.md](../../src/mediation/activate-mediation/activate-mediation.spec.md).
+[activate-mediation.spec.md](../../src/domain/mediation/activate-mediation/activate-mediation.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

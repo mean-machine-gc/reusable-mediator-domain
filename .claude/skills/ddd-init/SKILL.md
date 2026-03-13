@@ -27,7 +27,7 @@ This skill runs once per project. All other skills assume these files exist.
 Check which of these files already exist:
 
 ```
-src/shared/spec-framework.ts
+src/domain/domain/shared/spec-framework.ts
 scripts/spec-tools.ts
 scripts/generate-specs.ts
 scripts/tsconfig.json
@@ -37,13 +37,13 @@ docs/specs.ts
 
 Report status before proceeding:
 > "Here's what I found:
-> - `shared/spec-framework.ts` — missing (will create)
+> - `domain/shared/spec-framework.ts` — missing (will create)
 > - `scripts/spec-tools.ts` — exists (will check content)
 > - ..."
 
 ---
 
-## Step 2 — Create `shared/spec-framework.ts`
+## Step 2 — Create `domain/shared/spec-framework.ts`
 
 The single infrastructure file. Contains all types (`Result`, `SpecFn`, `Spec`,
 `StepInfo`, `CanonicalFn`, example types, assertion types) AND the runners
@@ -72,7 +72,7 @@ See [examples.md](examples.md) for the complete file contents.
 ## Step 4 — Create `scripts/generate-specs.ts`
 
 Auto-discovers specs with `document: true` via glob — no manual manifest needed.
-Globs for `src/**/*.spec.ts`, imports each file, and writes `.spec.md` files
+Globs for `src/domain/**/*.spec.ts`, imports each file, and writes `.spec.md` files
 next to any spec that has `document: true`. These are **fully generated** structural
 docs — pipeline tables and decision tables. No prose sections, no manual editing.
 The file is overwritten on every run.
@@ -172,7 +172,7 @@ After running, report:
 ```
 ddd-init complete:
 
-  shared/spec-framework.ts  created
+  domain/shared/spec-framework.ts  created
   scripts/spec-tools.ts     created
   scripts/generate-specs.ts created
   scripts/tsconfig.json     created

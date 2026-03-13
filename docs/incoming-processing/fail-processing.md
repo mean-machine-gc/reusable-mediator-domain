@@ -63,7 +63,7 @@ When processing is failed:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[fail-processing.spec.md](../../src/incoming-processing/fail-processing/fail-processing.spec.md).
+[fail-processing.spec.md](../../src/domain/incoming-processing/fail-processing/fail-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

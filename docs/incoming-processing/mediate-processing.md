@@ -64,7 +64,7 @@ When processing is mediated:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[mediate-processing.spec.md](../../src/incoming-processing/mediate-processing/mediate-processing.spec.md).
+[mediate-processing.spec.md](../../src/domain/incoming-processing/mediate-processing/mediate-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

@@ -313,7 +313,7 @@ When the cart is emptied:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[subtract-quantity.spec.md](../../src/cart/subtract-quantity/subtract-quantity.spec.md).
+[subtract-quantity.spec.md](../../src/domain/cart/subtract-quantity/subtract-quantity.spec.md).
 
 > **STEP** — domain function (sync or async). Fully testable in isolation with `testSpec`.
 > **DEP** — infrastructure capability (persistence, external service). Injected by the app layer.

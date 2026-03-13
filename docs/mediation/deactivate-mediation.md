@@ -62,7 +62,7 @@ When a mediation is deactivated:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[deactivate-mediation.spec.md](../../src/mediation/deactivate-mediation/deactivate-mediation.spec.md).
+[deactivate-mediation.spec.md](../../src/domain/mediation/deactivate-mediation/deactivate-mediation.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

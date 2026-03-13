@@ -7,27 +7,28 @@ core in `core/` subfolder. Shared steps live in `shared/steps/`.
 
 ```
 src/
-  shared/
-    spec-framework.ts       <- Result, SpecFn, Spec, StepInfo, testSpec, inheritFromSteps, asStepSpec
+  domain/
+    shared/
+      spec-framework.ts       <- Result, SpecFn, Spec, StepInfo, testSpec, inheritFromSteps, asStepSpec
 
-  cart/
-    types.ts                <- domain types, primitives, failure unions
+    cart/
+      types.ts                <- domain types, primitives, failure unions
 
-    shared/steps/           <- reusable atomic steps (used across operations)
-      check-active.spec.ts
-      check-active.test.ts
-      check-active.ts
+      shared/steps/           <- reusable atomic steps (used across operations)
+        check-active.spec.ts
+        check-active.test.ts
+        check-active.ts
 
-    subtract-quantity/      <- one folder per operation
-      subtract-quantity.spec.ts       <- shell spec
-      subtract-quantity.spec.md       <- CLI-generated structural docs (pipeline + decision table)
-      subtract-quantity.test.ts
-      subtract-quantity.ts            <- shell factory implementation
-      core/
-        subtract-quantity.spec.ts     <- core spec
-        subtract-quantity.spec.md
+      subtract-quantity/      <- one folder per operation
+        subtract-quantity.spec.ts       <- shell spec
+        subtract-quantity.spec.md       <- CLI-generated structural docs (pipeline + decision table)
         subtract-quantity.test.ts
-        subtract-quantity.ts          <- core factory implementation
+        subtract-quantity.ts            <- shell factory implementation
+        core/
+          subtract-quantity.spec.ts     <- core spec
+          subtract-quantity.spec.md
+          subtract-quantity.test.ts
+          subtract-quantity.ts          <- core factory implementation
 
 scripts/
   spec-tools.ts             <- flattenSpec, toMarkdownTable, toStepTable
@@ -369,7 +370,7 @@ testSpec('checkActive', checkActiveSpec, checkActive)
 
 Specs with `document: true` get auto-generated `.spec.md` files containing
 pipeline tables and decision tables. No manual manifest — `npm run gen:specs`
-globs for `src/**/*.spec.ts` and processes any spec export with `document: true`.
+globs for `src/domain/**/*.spec.ts` and processes any spec export with `document: true`.
 
 A Claude Code hook auto-runs this when `.spec.ts` files change.
 

@@ -5,10 +5,10 @@ corresponds to a step in SKILL.md.
 
 ---
 
-## shared/spec-framework.ts (Step 2)
+## domain/shared/spec-framework.ts (Step 2)
 
 ```ts
-// shared/spec-framework.ts
+// domain/shared/spec-framework.ts
 
 // =============================================================================
 // Spec Framework — the shared infrastructure
@@ -690,7 +690,7 @@ import { resolve, basename } from 'path'
 import { buildSpecMd } from './spec-tools'
 
 async function main() {
-  const specFiles = globSync('src/**/*.spec.ts')
+  const specFiles = globSync('src/domain/**/*.spec.ts')
 
   if (specFiles.length === 0) {
     console.log('No .spec.ts files found.')

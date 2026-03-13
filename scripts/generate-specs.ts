@@ -6,7 +6,7 @@ import { resolve, basename } from 'path'
 import { buildSpecMd } from './spec-tools'
 
 async function main() {
-  const specFiles = globSync('src/**/*.spec.ts')
+  const specFiles = globSync('src/domain/**/*.spec.ts')
 
   if (specFiles.length === 0) {
     console.log('No .spec.ts files found.')

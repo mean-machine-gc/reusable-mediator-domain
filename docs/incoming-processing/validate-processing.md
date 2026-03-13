@@ -65,7 +65,7 @@ When processing is validated:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[validate-processing.spec.md](../../src/incoming-processing/validate-processing/validate-processing.spec.md).
+[validate-processing.spec.md](../../src/domain/incoming-processing/validate-processing/validate-processing.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

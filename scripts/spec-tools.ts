@@ -5,7 +5,7 @@
 // Strategy-aware: produces main table (linear) + per-handler sub-tables.
 // =============================================================================
 
-import type { Spec, StepInfo, StrategyStep } from '../src/shared/spec-framework'
+import type { Spec, StepInfo, StrategyStep } from '../src/domain/shared/spec-framework'
 
 // -- Types --------------------------------------------------------------------
 

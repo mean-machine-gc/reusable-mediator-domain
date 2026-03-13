@@ -77,7 +77,7 @@ When max attempts are exhausted:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[record-delivery.spec.md](../../src/dispatches/record-delivery/record-delivery.spec.md).
+[record-delivery.spec.md](../../src/domain/dispatches/record-delivery/record-delivery.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

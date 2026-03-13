@@ -61,7 +61,7 @@ When a dispatch is created:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[create-dispatch.spec.md](../../src/dispatches/create-dispatch/create-dispatch.spec.md).
+[create-dispatch.spec.md](../../src/domain/dispatches/create-dispatch/create-dispatch.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

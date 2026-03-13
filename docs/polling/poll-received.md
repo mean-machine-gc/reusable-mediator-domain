@@ -54,7 +54,7 @@ When the batch is empty:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[poll-received.spec.md](../../src/polling/poll-received/poll-received.spec.md).
+[poll-received.spec.md](../../src/domain/polling/poll-received/poll-received.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
