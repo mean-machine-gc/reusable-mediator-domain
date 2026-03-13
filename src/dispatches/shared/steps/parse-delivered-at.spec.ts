@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { DeliveredAt, DeliveredAtFailure } from '../../types'
+import type { DeliveredAt, DeliveredAtValidations } from '../../types'
 
 export type ParseDeliveredAtFn = SpecFn<
     unknown,
     DeliveredAt,
-    DeliveredAtFailure,
+    DeliveredAtValidations,
     'delivered-at-parsed'
 >
 

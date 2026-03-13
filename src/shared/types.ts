@@ -1,26 +1,22 @@
+import type { ID, IDValidations } from './primitives'
+
 // ── Shared Domain Primitives ─────────────────────────────────────────────────
 // Primitives used across aggregate boundaries.
 
 // Identifiers
-export type ProcessingId = string
-export type ProcessingIdFailure =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_64'
-  | 'not_a_uuid'
-  | 'script_injection'
+export type ProcessingId = ID
+export type ProcessingIdValidations = IDValidations
 
-export type MediationId = string
-export type MediationIdFailure =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_64'
-  | 'not_a_uuid'
-  | 'script_injection'
+export type MediationId = ID
+export type MediationIdValidations = IDValidations
 
 // Routing
+/**
+ * @minLength 2
+ * @maxLength 256
+ */
 export type Topic = string
-export type TopicFailure =
+export type TopicValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_short_min_2'
@@ -29,8 +25,12 @@ export type TopicFailure =
   | 'invalid_chars_alphanumeric_hyphens_and_dots_only'
   | 'script_injection'
 
+/**
+ * @minLength 1
+ * @maxLength 2048
+ */
 export type Destination = string
-export type DestinationFailure =
+export type DestinationValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_2048'

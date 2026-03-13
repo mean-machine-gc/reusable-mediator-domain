@@ -1,4 +1,5 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../../shared/spec-framework'
+import { asStepSpec } from '../../../shared/spec-framework'
 import type { CloudEvent } from 'cloudevents'
 import type { ActiveMediation, Destination, TransformRegistry } from '../../types'
 import { executeFiltersSpec } from '../steps/execute-filters.spec'
@@ -14,8 +15,8 @@ export type MediateCoreFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'executeFilters', type: 'step', description: 'Run all filter steps', spec: executeFiltersSpec as unknown as Spec<AnyFn> },
-    { name: 'executeTransforms', type: 'step', description: 'Apply all transformations', spec: executeTransformsSpec as unknown as Spec<AnyFn> },
+    { name: 'executeFilters', type: 'step', description: 'Run all filter steps', spec: asStepSpec(executeFiltersSpec) },
+    { name: 'executeTransforms', type: 'step', description: 'Apply all transformations', spec: asStepSpec(executeTransformsSpec) },
 ]
 
 const baseEvent = { type: 'test', source: 'test', data: { status: 'active' } } as unknown as CloudEvent
@@ -33,6 +34,7 @@ const baseMediation: ActiveMediation = {
 }
 
 export const mediateCoreSpec: Spec<MediateCoreFn> = {
+    document: true,
     steps,
     shouldFailWith: {
         unknown_transform: {

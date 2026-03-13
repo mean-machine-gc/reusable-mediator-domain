@@ -1,8 +1,5 @@
 import type { ParseCreatedAtFn } from './parse-created-at.spec'
+import { parseTimestamp } from '../../../shared/primitives'
 
-export const parseCreatedAt: ParseCreatedAtFn['signature'] = (raw) => {
-    if (!(raw instanceof Date) || isNaN(raw.getTime()))
-        return { ok: false, errors: ['not_a_date'] }
-
-    return { ok: true, value: raw, successType: ['created-at-parsed'] }
-}
+export const parseCreatedAt: ParseCreatedAtFn['signature'] = (raw) =>
+    parseTimestamp(raw, 'created-at-parsed')

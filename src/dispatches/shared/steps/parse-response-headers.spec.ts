@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ResponseHeaders, ResponseHeadersFailure } from '../../types'
+import type { ResponseHeaders, ResponseHeadersValidations } from '../../types'
 
 export type ParseResponseHeadersFn = SpecFn<
     unknown,
     ResponseHeaders,
-    ResponseHeadersFailure,
+    ResponseHeadersValidations,
     'response-headers-parsed'
 >
 

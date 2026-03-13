@@ -1,21 +1,26 @@
 import type { CloudEvent } from 'cloudevents'
 import type {
-  ProcessingId, ProcessingIdFailure,
+  ProcessingId, ProcessingIdValidations,
   MediationId,
   Topic,
   Destination,
 } from '../shared/types'
+import type { Timestamp, TimestampValidations } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
 // ── Shared Domain Primitives (re-exported) ──────────────────────────────────
-export type { ProcessingId, ProcessingIdFailure }
+export type { ProcessingId, ProcessingIdValidations }
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
 
 // Schema
+/**
+ * @minLength 1
+ * @maxLength 2048
+ */
 export type DataschemaUri = string
-export type DataschemaUriFailure =
+export type DataschemaUriValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_2048'
@@ -23,24 +28,28 @@ export type DataschemaUriFailure =
   | 'script_injection'
 
 // Failure reason
+/**
+ * @minLength 1
+ * @maxLength 4096
+ */
 export type ProcessingFailureReason = string
-export type ProcessingFailureReasonFailure =
+export type ProcessingFailureReasonValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_4096'
 
 // Temporal
-export type ReceivedAt = Date
-export type ReceivedAtFailure = 'not_a_date'
+export type ReceivedAt = Timestamp
+export type ReceivedAtValidations = TimestampValidations
 
-export type ValidatedAt = Date
-export type ValidatedAtFailure = 'not_a_date'
+export type ValidatedAt = Timestamp
+export type ValidatedAtValidations = TimestampValidations
 
-export type MediatedAt = Date
-export type MediatedAtFailure = 'not_a_date'
+export type MediatedAt = Timestamp
+export type MediatedAtValidations = TimestampValidations
 
-export type FailedAt = Date
-export type FailedAtFailure = 'not_a_date'
+export type FailedAt = Timestamp
+export type FailedAtValidations = TimestampValidations
 
 // ── Mediation Outcome ───────────────────────────────────────────────────────
 

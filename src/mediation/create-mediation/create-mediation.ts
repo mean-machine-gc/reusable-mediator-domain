@@ -1,12 +1,14 @@
 import type { CreateMediationShellFn } from './create-mediation.spec'
-import type { Result } from '../../shared/spec-framework'
-import type { MediationId, CreatedAt, DraftMediation } from '../types'
+import type { DomainDeps } from '../../domain-deps'
+import type { ParseMediationIdFn } from '../shared/steps/parse-mediation-id.spec'
+import { parseMediationId } from '../shared/steps/parse-mediation-id'
 import { parseTopic } from '../shared/steps/parse-topic'
 import { parseDestination } from '../shared/steps/parse-destination'
 import { parsePipeline } from '../shared/steps/parse-pipeline'
 import { assembleDraftMediation } from '../shared/steps/assemble-draft-mediation'
 
 type ShellSteps = {
+    parseMediationId: ParseMediationIdFn['signature']
     parseTopic: typeof parseTopic
     parseDestination: typeof parseDestination
     parsePipeline: typeof parsePipeline
@@ -14,12 +16,13 @@ type ShellSteps = {
 }
 
 type Deps = {
-    generateId: () => Promise<Result<MediationId>>
-    generateTimestamp: () => Promise<Result<CreatedAt>>
-    saveMediation: (mediation: DraftMediation) => Promise<Result<DraftMediation>>
+    generateId: DomainDeps['generateId']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertMediation: DomainDeps['upsertMediation']
 }
 
 export const shellSteps: ShellSteps = {
+    parseMediationId,
     parseTopic,
     parseDestination,
     parsePipeline,
@@ -39,22 +42,21 @@ const createMediationShellFactory =
         const pipeline = steps.parsePipeline(input.cmd.pipeline)
         if (!pipeline.ok) return pipeline as any
 
-        const id = await deps.generateId()
+        const rawIdResult = await deps.generateId()
+        const id = steps.parseMediationId(rawIdResult.value)
         if (!id.ok) return id as any
 
-        const timestamp = await deps.generateTimestamp()
-        if (!timestamp.ok) return timestamp as any
+        const createdAtResult = await deps.generateTimestamp()
 
         const draft = steps.assembleDraftMediation({
             cmd: { topic: topic.value, destination: destination.value, pipeline: pipeline.value },
-            ctx: { id: id.value, createdAt: timestamp.value },
+            ctx: { id: id.value, createdAt: createdAtResult.value },
         })
         if (!draft.ok) return draft as any
 
-        const saved = await deps.saveMediation(draft.value)
-        if (!saved.ok) return saved as any
+        await deps.upsertMediation(draft.value)
 
-        return { ok: true, value: saved.value, successType: ['mediation-created'] }
+        return { ok: true, value: draft.value, successType: ['mediation-created'] }
     }
 
-export const makeCreateMediation = createMediationShellFactory(shellSteps)
+export const _createMediation = createMediationShellFactory(shellSteps)

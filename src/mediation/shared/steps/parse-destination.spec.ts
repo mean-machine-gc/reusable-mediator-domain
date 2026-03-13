@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { Destination, DestinationFailure } from '../../types'
+import type { Destination, DestinationValidations } from '../../types'
 
 export type ParseDestinationFn = SpecFn<
     unknown,
     Destination,
-    DestinationFailure,
+    DestinationValidations,
     'destination-parsed'
 >
 

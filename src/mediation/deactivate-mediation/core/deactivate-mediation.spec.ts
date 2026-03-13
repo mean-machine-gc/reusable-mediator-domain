@@ -1,4 +1,5 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../../shared/spec-framework'
+import { asStepSpec } from '../../../shared/spec-framework'
 import type {
     Mediation,
     ActiveMediation,
@@ -18,8 +19,8 @@ export type DeactivateMediationCoreFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'checkDeactivatableState', type: 'step', description: 'Verify mediation is in active state', spec: checkDeactivatableStateSpec as unknown as Spec<AnyFn> },
-    { name: 'assembleDeactivatedMediation', type: 'step', description: 'Assemble deactivated mediation', spec: assembleDeactivatedMediationSpec as unknown as Spec<AnyFn> },
+    { name: 'checkDeactivatableState', type: 'step', description: 'Verify mediation is in active state', spec: asStepSpec(checkDeactivatableStateSpec) },
+    { name: 'assembleDeactivatedMediation', type: 'step', description: 'Assemble deactivated mediation', spec: asStepSpec(assembleDeactivatedMediationSpec) },
     { name: 'evaluateSuccessType', type: 'step', description: 'Classify the success outcome' },
 ]
 
@@ -37,6 +38,7 @@ const activeMediation: ActiveMediation = {
 const deactivatedAt = new Date('2025-02-01')
 
 export const deactivateMediationCoreSpec: Spec<DeactivateMediationCoreFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

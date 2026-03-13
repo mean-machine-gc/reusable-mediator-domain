@@ -1,6 +1,10 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
 import type { PollValidatedResult } from '../types'
 import { mediateAllSpec } from './steps/mediate-all.spec'
+import { createDispatchShellSpec } from '../../dispatches/create-dispatch/create-dispatch.spec'
+import { mediateProcessingShellSpec } from '../../incoming-processing/mediate-processing/mediate-processing.spec'
+import { failProcessingShellSpec } from '../../incoming-processing/fail-processing/fail-processing.spec'
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -30,19 +34,20 @@ export type PollValidatedFn = SpecFn<
 //   4. Assemble summary from outcomes
 
 const steps: StepInfo[] = [
-    { name: 'fetchValidated', type: 'dep', description: 'Fetch up to batchSize processing records in validated state' },
+    { name: 'findIncomingProcessingsByState', type: 'dep', description: 'Fetch up to batchSize processing records in validated state' },
     { name: 'findActiveMediationsByTopic', type: 'dep', description: 'Find all active mediations matching a topic' },
     { name: 'getTransformRegistry', type: 'dep', description: 'Retrieve the transform function registry' },
-    { name: 'mediateAll', type: 'step', description: 'Run all mediations for an event, collect outcomes', spec: mediateAllSpec as unknown as Spec<AnyFn> },
-    { name: 'generateDispatchId', type: 'dep', description: 'Generate a unique dispatch ID for each routed result' },
-    { name: 'createDispatch', type: 'dep', description: 'Create a dispatch aggregate for a routed mediation result' },
-    { name: 'mediateProcessing', type: 'dep', description: 'Transition processing record to mediated with outcomes' },
-    { name: 'failProcessing', type: 'dep', description: 'Transition a record to failed state on error' },
+    { name: 'mediateAll', type: 'step', description: 'Run all mediations for an event, collect outcomes', spec: asStepSpec(mediateAllSpec) },
+    { name: 'generateId', type: 'dep', description: 'Generate a unique dispatch ID for each routed result' },
+    { name: 'createDispatch', type: 'step', description: 'Create a dispatch aggregate for a routed mediation result', spec: asStepSpec(createDispatchShellSpec) },
+    { name: 'mediateProcessing', type: 'step', description: 'Transition processing record to mediated with outcomes', spec: asStepSpec(mediateProcessingShellSpec) },
+    { name: 'failProcessing', type: 'step', description: 'Transition a record to failed state on error', spec: asStepSpec(failProcessingShellSpec) },
 ]
 
 // ── Spec ─────────────────────────────────────────────────────────────────────
 
 export const pollValidatedSpec: Spec<PollValidatedFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

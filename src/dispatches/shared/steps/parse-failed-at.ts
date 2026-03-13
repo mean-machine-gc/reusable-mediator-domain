@@ -1,8 +1,5 @@
 import type { ParseFailedAtFn } from './parse-failed-at.spec'
+import { parseTimestamp } from '../../../shared/primitives'
 
-export const parseFailedAt: ParseFailedAtFn['signature'] = (raw) => {
-    if (!(raw instanceof Date) || isNaN(raw.getTime()))
-        return { ok: false, errors: ['not_a_date'] }
-
-    return { ok: true, value: raw, successType: ['failed-at-parsed'] }
-}
+export const parseFailedAt: ParseFailedAtFn['signature'] = (raw) =>
+    parseTimestamp(raw, 'failed-at-parsed')

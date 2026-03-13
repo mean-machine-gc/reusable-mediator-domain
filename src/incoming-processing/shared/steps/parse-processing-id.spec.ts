@@ -1,49 +1,37 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ProcessingId, ProcessingIdFailure } from '../../types'
+import type { ProcessingId } from '../../types'
+import { processingId as f } from '../../fixtures'
+
+export type ParseProcessingIdFailures = 'invalid_processing_id' | 'script_injection'
 
 export type ParseProcessingIdFn = SpecFn<
     unknown,
     ProcessingId,
-    ProcessingIdFailure,
+    ParseProcessingIdFailures,
     'processing-id-parsed'
 >
 
 export const parseProcessingIdSpec: Spec<ParseProcessingIdFn> = {
     shouldFailWith: {
-        not_a_string: {
-            description: 'Input is not a string',
+        invalid_processing_id: {
+            description: 'Input fails TypeBox validation (not a string, empty, too long, not a UUID)',
             examples: [
-                { description: 'number input', whenInput: 42 },
-                { description: 'null input', whenInput: null },
-                { description: 'undefined input', whenInput: undefined },
-                { description: 'object input', whenInput: { id: 'abc' } },
-            ],
-        },
-        empty: {
-            description: 'Input is an empty string',
-            examples: [
-                { description: 'empty string', whenInput: '' },
-            ],
-        },
-        too_long_max_64: {
-            description: 'Input exceeds 64 characters',
-            examples: [
-                { description: 'string longer than 64 chars', whenInput: 'a'.repeat(65) },
-            ],
-        },
-        not_a_uuid: {
-            description: 'Input is not a valid UUID',
-            examples: [
-                { description: 'plain text', whenInput: 'not-a-uuid' },
-                { description: 'partial UUID', whenInput: '550e8400-e29b-41d4' },
+                { description: 'number input', whenInput: f.invalid.number },
+                { description: 'null input', whenInput: f.invalid.null },
+                { description: 'undefined input', whenInput: f.invalid.undefined },
+                { description: 'object input', whenInput: f.invalid.object },
+                { description: 'empty string', whenInput: f.invalid.empty },
+                { description: 'string longer than 64 chars', whenInput: f.invalid.tooLong },
+                { description: 'not a uuid', whenInput: f.invalid.notUuid },
+                { description: 'partial UUID', whenInput: f.invalid.partialUuid },
             ],
         },
         script_injection: {
-            description: 'Input contains script injection',
+            description: 'Input contains script injection patterns',
             examples: [
-                { description: 'script tag', whenInput: '<script>alert("xss")</script>' },
-                { description: 'javascript protocol', whenInput: 'javascript:alert(1)' },
-                { description: 'event handler', whenInput: 'onclick=alert(1)' },
+                { description: 'script tag', whenInput: f.injection.scriptTag },
+                { description: 'javascript protocol', whenInput: f.injection.javascriptProtocol },
+                { description: 'event handler', whenInput: f.injection.eventHandler },
             ],
         },
     },
@@ -53,13 +41,13 @@ export const parseProcessingIdSpec: Spec<ParseProcessingIdFn> = {
             examples: [
                 {
                     description: 'valid UUID v4',
-                    whenInput: '550e8400-e29b-41d4-a716-446655440000',
-                    then: '550e8400-e29b-41d4-a716-446655440000',
+                    whenInput: f.valid.uuid,
+                    then: f.valid.uuid,
                 },
                 {
                     description: 'another valid UUID',
-                    whenInput: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-                    then: '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
+                    whenInput: f.valid.anotherUuid,
+                    then: f.valid.anotherUuid,
                 },
             ],
         },

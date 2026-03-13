@@ -8,13 +8,14 @@
 
 export type Result<T, F extends string = string, S extends string = string> =
     | { ok: true; value: T; successType: S[] }
-    | { ok: false; errors: F[] }
+    | { ok: false; errors: F[]; details?: string[] }
 
 // -- SpecFn -------------------------------------------------------------------
 
 export type SpecFn<I, O, F extends string, S extends string> = {
     signature: (i: I) => Result<O, F, S>
     asyncSignature: (i: I) => Promise<Result<O, F, S>>
+    depSignature: (i: I) => Promise<{ ok: true; value: O; successType: S[] }>
     result: Result<O, F, S>
     input: I
     failures: F
@@ -112,13 +113,25 @@ export type AssertionGroup<Fn extends AnyFn> = {
 // Behavioral contract + optional algorithm decomposition.
 // steps is the "how" — visible, reviewable, and the source for auto-inherited failures.
 // When steps is present, shouldFailWith is partial — inherited failures are resolved at runtime.
+// document: true opts in to .spec.md generation via `npm run gen:specs`.
 
 export type Spec<Fn extends AnyFn> = {
+    document?: boolean
     steps?: StepInfo[]
     shouldFailWith: Partial<Record<Fn['failures'], FailGroup<Fn>>>
     shouldSucceedWith: Record<Fn['successTypes'], SuccessGroup<Fn>>
     shouldAssert: Record<Fn['successTypes'], AssertionGroup<Fn>>
 }
+
+// -- asStepSpec ---------------------------------------------------------------
+// Absorbs the AnyFn erasure cast. Steps with `never` failures or any SpecFn
+// variant can be passed to StepInfo.spec without `as unknown as Spec<AnyFn>`.
+//
+// Before: { name: 'calculateTotal', type: 'step', spec: calculateTotalSpec as unknown as Spec<AnyFn> }
+// After:  { name: 'calculateTotal', type: 'step', spec: asStepSpec(calculateTotalSpec) }
+
+export const asStepSpec = <Fn extends AnyFn>(spec: Spec<Fn>): Spec<AnyFn> =>
+    spec as unknown as Spec<AnyFn>
 
 // -- inheritFromSteps() -------------------------------------------------------
 // Auto-inherits failure groups from all step specs in a steps array.
@@ -270,3 +283,56 @@ export const testSpec = <Fn extends AnyFn>(
         })
     })
 }
+
+// -- CanonicalFn --------------------------------------------------------------
+// Standardized implementation structure for flat functions (no decomposition).
+// The canonical formula: constraints → conditions → transform.
+//
+// - constraints: Record<F, predicate>  — returns true when input is VALID
+//                                        (constraint satisfied). False → failure.
+// - conditions:  Record<S, predicate>  — first match wins. Determines success type.
+// - transform:   Record<S, fn>         — produces the output for the matched condition.
+//
+// Usage:
+//   const def: CanonicalFn<CheckActiveFn> = { constraints: {...}, conditions: {...}, transform: {...} }
+//   export const checkActive = execCanonical<CheckActiveFn>(def)
+//
+// The result is a Fn['signature'] — slots directly into factory Steps or testSpec.
+
+export type CanonicalFn<Fn extends AnyFn> = {
+    constraints: Record<Fn['failures'], (input: Fn['input']) => boolean>
+    conditions:  Record<Fn['successTypes'], (input: Fn['input']) => boolean>
+    transform:   Record<Fn['successTypes'], (input: Fn['input']) => Fn['output']>
+}
+
+// -- execCanonical ------------------------------------------------------------
+// Executes the canonical formula:
+//   1. Check all constraints — accumulate failures (predicate returns false → fail)
+//   2. Find first matching condition (first match wins — declaration order matters)
+//   3. Transform via the matched condition's transform function
+//
+// Returns Fn['signature'] — a standard (input) => Result<O, F, S> function.
+
+export const execCanonical = <Fn extends AnyFn>(
+    def: CanonicalFn<Fn>,
+): Fn['signature'] =>
+    (input: Fn['input']): Fn['result'] => {
+        // 1. Check all constraints — accumulate failures
+        const errors: Fn['failures'][] = []
+        for (const [failure, predicate] of Object.entries(def.constraints) as [Fn['failures'], (i: Fn['input']) => boolean][]) {
+            if (!predicate(input)) errors.push(failure)
+        }
+        if (errors.length > 0) return { ok: false, errors }
+
+        // 2. Find matching success condition (first match wins)
+        for (const [successType, condition] of Object.entries(def.conditions) as [Fn['successTypes'], (i: Fn['input']) => boolean][]) {
+            if (condition(input)) {
+                // 3. Transform
+                const value = def.transform[successType](input)
+                return { ok: true, value, successType: [successType] }
+            }
+        }
+
+        // No condition matched — should not happen if conditions are exhaustive
+        return { ok: false, errors: [] as unknown as Fn['failures'][] }
+    }

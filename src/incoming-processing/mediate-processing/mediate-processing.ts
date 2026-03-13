@@ -1,5 +1,5 @@
 import type { MediateProcessingShellFn } from './mediate-processing.spec'
-import type { IncomingProcessing, MediatedProcessing, MediatedAt } from '../types'
+import type { DomainDeps } from '../../domain-deps'
 import type { ParseProcessingIdFn } from '../shared/steps/parse-processing-id.spec'
 import type { MediateProcessingFn } from './core/mediate-processing.spec'
 import { parseProcessingId } from '../shared/steps/parse-processing-id'
@@ -11,9 +11,9 @@ type Steps = {
 }
 
 type Deps = {
-    loadState: (id: string) => Promise<IncomingProcessing | null>
-    generateMediatedAt: () => Promise<MediatedAt>
-    save: (aggregate: MediatedProcessing) => Promise<void>
+    getIncomingProcessingById: DomainDeps['getIncomingProcessingById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertIncomingProcessing: DomainDeps['upsertIncomingProcessing']
 }
 
 const mediateProcessingShellFactory =
@@ -23,24 +23,25 @@ const mediateProcessingShellFactory =
         const parsed = steps.parseProcessingId(input.cmd.processingId)
         if (!parsed.ok) return parsed as any
 
-        const state = await deps.loadState(parsed.value)
-        if (!state) return { ok: false, errors: ['not_found'] } as any
+        const stateResult = await deps.getIncomingProcessingById(parsed.value)
+        if (stateResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
-        const mediatedAt = await deps.generateMediatedAt()
+        const mediatedAtResult = await deps.generateTimestamp()
+        const mediatedAt = mediatedAtResult.value
 
         const result = steps.mediateProcessingCore({
             cmd: { processingId: parsed.value },
-            state,
+            state: stateResult.value!,
             ctx: { outcomes: input.cmd.outcomes, mediatedAt },
         })
         if (!result.ok) return result as any
 
-        await deps.save(result.value)
+        await deps.upsertIncomingProcessing(result.value)
 
         return { ok: true, value: result.value, successType: result.successType }
     }
 
-export const mediateProcessing = mediateProcessingShellFactory({
+export const _mediateProcessing = mediateProcessingShellFactory({
     parseProcessingId,
     mediateProcessingCore,
 })

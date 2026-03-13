@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { AttemptCount, AttemptCountFailure } from '../../types'
+import type { AttemptCount, AttemptCountValidations } from '../../types'
 
 export type ParseAttemptCountFn = SpecFn<
     unknown,
     AttemptCount,
-    AttemptCountFailure,
+    AttemptCountValidations,
     'attempt-count-parsed'
 >
 

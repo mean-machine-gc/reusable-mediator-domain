@@ -1,6 +1,5 @@
 import type { DeactivateMediationShellFn } from './deactivate-mediation.spec'
-import type { Result } from '../../shared/spec-framework'
-import type { MediationId, Mediation, DeactivatedMediation, DeactivatedAt } from '../types'
+import type { DomainDeps } from '../../domain-deps'
 import { parseMediationId } from '../shared/steps/parse-mediation-id'
 import { deactivateMediationCore } from './core/deactivate-mediation'
 
@@ -10,9 +9,9 @@ type ShellSteps = {
 }
 
 type Deps = {
-    findMediation: (id: MediationId) => Promise<Result<Mediation>>
-    generateTimestamp: () => Promise<Result<DeactivatedAt>>
-    saveMediation: (mediation: DeactivatedMediation) => Promise<Result<DeactivatedMediation>>
+    getMediationById: DomainDeps['getMediationById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertMediation: DomainDeps['upsertMediation']
 }
 
 export const shellSteps: ShellSteps = {
@@ -27,22 +26,20 @@ const deactivateMediationShellFactory =
         const mediationId = steps.parseMediationId(input.cmd.mediationId)
         if (!mediationId.ok) return mediationId as any
 
-        const mediation = await deps.findMediation(mediationId.value)
-        if (!mediation.ok) return mediation as any
+        const mediationResult = await deps.getMediationById(mediationId.value)
+        if (mediationResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
-        const timestamp = await deps.generateTimestamp()
-        if (!timestamp.ok) return timestamp as any
+        const deactivatedAtResult = await deps.generateTimestamp()
 
         const deactivated = steps.deactivateMediationCore({
-            state: mediation.value,
-            ctx: { deactivatedAt: timestamp.value },
+            state: mediationResult.value!,
+            ctx: { deactivatedAt: deactivatedAtResult.value },
         })
         if (!deactivated.ok) return deactivated as any
 
-        const saved = await deps.saveMediation(deactivated.value)
-        if (!saved.ok) return saved as any
+        await deps.upsertMediation(deactivated.value)
 
-        return { ok: true, value: saved.value, successType: deactivated.successType }
+        return { ok: true, value: deactivated.value, successType: deactivated.successType }
     }
 
-export const makeDeactivateMediation = deactivateMediationShellFactory(shellSteps)
+export const _deactivateMediation = deactivateMediationShellFactory(shellSteps)

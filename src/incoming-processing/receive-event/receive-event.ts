@@ -1,5 +1,5 @@
 import type { ReceiveEventShellFn } from './receive-event.spec'
-import type { IncomingProcessing, ReceivedProcessing, ReceivedAt } from '../types'
+import type { DomainDeps } from '../../domain-deps'
 import type { ParseProcessingIdFn } from '../shared/steps/parse-processing-id.spec'
 import type { ReceiveEventFn } from './core/receive-event.spec'
 import { parseProcessingId } from '../shared/steps/parse-processing-id'
@@ -11,9 +11,9 @@ type Steps = {
 }
 
 type Deps = {
-    loadState: (id: string) => Promise<IncomingProcessing | null>
-    generateReceivedAt: () => Promise<ReceivedAt>
-    save: (aggregate: ReceivedProcessing) => Promise<void>
+    getIncomingProcessingById: DomainDeps['getIncomingProcessingById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertIncomingProcessing: DomainDeps['upsertIncomingProcessing']
 }
 
 const receiveEventShellFactory =
@@ -23,9 +23,11 @@ const receiveEventShellFactory =
         const parsed = steps.parseProcessingId(input.cmd.processingId)
         if (!parsed.ok) return parsed as any
 
-        const state = await deps.loadState(parsed.value)
+        const stateResult = await deps.getIncomingProcessingById(parsed.value)
+        const state = stateResult.value
 
-        const receivedAt = await deps.generateReceivedAt()
+        const receivedAtResult = await deps.generateTimestamp()
+        const receivedAt = receivedAtResult.value
 
         const result = steps.receiveEventCore({
             cmd: { processingId: parsed.value, event: input.cmd.event as any },
@@ -34,12 +36,12 @@ const receiveEventShellFactory =
         })
         if (!result.ok) return result as any
 
-        await deps.save(result.value)
+        await deps.upsertIncomingProcessing(result.value)
 
         return { ok: true, value: result.value, successType: result.successType }
     }
 
-export const receiveEvent = receiveEventShellFactory({
+export const _receiveEvent = receiveEventShellFactory({
     parseProcessingId,
     receiveEventCore,
 })

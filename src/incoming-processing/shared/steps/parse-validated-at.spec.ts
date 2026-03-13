@@ -1,23 +1,26 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ValidatedAt, ValidatedAtFailure } from '../../types'
+import type { ValidatedAt } from '../../types'
+import { timestamps } from '../../fixtures'
+
+export type ParseValidatedAtFailures = 'invalid_validated_at'
 
 export type ParseValidatedAtFn = SpecFn<
     unknown,
     ValidatedAt,
-    ValidatedAtFailure,
+    ParseValidatedAtFailures,
     'validated-at-parsed'
 >
 
 export const parseValidatedAtSpec: Spec<ParseValidatedAtFn> = {
     shouldFailWith: {
-        not_a_date: {
-            description: 'Input is not a valid Date',
+        invalid_validated_at: {
+            description: 'Input is not a valid validated-at timestamp',
             examples: [
-                { description: 'string input', whenInput: '2025-01-01' },
-                { description: 'number input', whenInput: 1704067200000 },
-                { description: 'null input', whenInput: null },
-                { description: 'undefined input', whenInput: undefined },
-                { description: 'invalid date object', whenInput: new Date('invalid') },
+                { description: 'string input', whenInput: timestamps.invalid.string },
+                { description: 'number input', whenInput: timestamps.invalid.number },
+                { description: 'null input', whenInput: timestamps.invalid.null },
+                { description: 'undefined input', whenInput: timestamps.invalid.undefined },
+                { description: 'invalid date object', whenInput: timestamps.invalid.invalidDate },
             ],
         },
     },
@@ -27,8 +30,8 @@ export const parseValidatedAtSpec: Spec<ParseValidatedAtFn> = {
             examples: [
                 {
                     description: 'valid date',
-                    whenInput: new Date('2025-06-15T10:35:00Z'),
-                    then: new Date('2025-06-15T10:35:00Z'),
+                    whenInput: timestamps.valid.validatedAt,
+                    then: timestamps.valid.validatedAt,
                 },
             ],
         },

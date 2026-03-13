@@ -1,4 +1,5 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../../shared/spec-framework'
+import { asStepSpec } from '../../../shared/spec-framework'
 import type { CloudEvent } from 'cloudevents'
 import type { FilterStep } from '../../types'
 import { evaluateFilterStepSpec } from './evaluate-filter-step.spec'
@@ -11,12 +12,13 @@ export type ExecuteFiltersFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'evaluateFilterStep', type: 'step', description: 'Evaluate a single filter step', spec: evaluateFilterStepSpec as unknown as Spec<AnyFn> },
+    { name: 'evaluateFilterStep', type: 'step', description: 'Evaluate a single filter step', spec: asStepSpec(evaluateFilterStepSpec) },
 ]
 
 const baseEvent = { type: 'test', source: 'test', data: { status: 'active' } } as unknown as CloudEvent
 
 export const executeFiltersSpec: Spec<ExecuteFiltersFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

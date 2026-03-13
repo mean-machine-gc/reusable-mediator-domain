@@ -4,67 +4,63 @@ import type {
   MediationId,
   Destination,
 } from '../shared/types'
+import type { ID, IDValidations, Timestamp, TimestampValidations } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
 // ── Domain Primitives ─────────────────────────────────────────────────────────
 
 // Identifiers
-export type DispatchId = string
-export type DispatchIdFailure =
-  | 'not_a_string'
-  | 'empty'
-  | 'too_long_max_64'
-  | 'not_a_uuid'
-  | 'script_injection'
+export type DispatchId = ID
+export type DispatchIdValidations = IDValidations
 
 // Numeric domain values
 export type AttemptCount = number
-export type AttemptCountFailure =
+export type AttemptCountValidations =
   | 'not_a_number'
   | 'not_an_integer'
   | 'negative'
 
 export type StatusCode = number
-export type StatusCodeFailure =
+export type StatusCodeValidations =
   | 'not_a_number'
   | 'not_an_integer'
   | 'out_of_range_min_100_max_599'
 
 export type ResponseTimeMs = number
-export type ResponseTimeMsFailure =
+export type ResponseTimeMsValidations =
   | 'not_a_number'
   | 'negative'
 
 // Descriptive strings
 export type ResponseBody = string
-export type ResponseBodyFailure =
+export type ResponseBodyValidations =
   | 'not_a_string'
   | 'too_long_max_65536'
 
 export type DeliveryError = string
-export type DeliveryErrorFailure =
+export type DeliveryErrorValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_4096'
 
 // Structured
 export type ResponseHeaders = Record<string, string>
-export type ResponseHeadersFailure =
+export type ResponseHeadersValidations =
   | 'not_an_object'
 
 // Temporal
-export type CreatedAt = Date
-export type CreatedAtFailure = 'not_a_date'
+export type CreatedAt = Timestamp
+export type CreatedAtValidations = TimestampValidations
 
-export type DeliveredAt = Date
-export type DeliveredAtFailure = 'not_a_date'
+export type DeliveredAt = Timestamp
+export type DeliveredAtValidations = TimestampValidations
 
-export type FailedAt = Date
-export type FailedAtFailure = 'not_a_date'
+export type FailedAt = Timestamp
+export type FailedAtValidations = TimestampValidations
 
-export type AttemptedAt = Date
-export type AttemptedAtFailure = 'not_a_date'
+export type AttemptedAt = Timestamp
+export type AttemptedAtValidations = TimestampValidations
 
 // ── Delivery Attempt ────────────────────────────────────────────────────────
 

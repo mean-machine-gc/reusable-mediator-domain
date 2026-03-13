@@ -1,5 +1,5 @@
 import type { FailProcessingShellFn } from './fail-processing.spec'
-import type { IncomingProcessing, FailedProcessing, FailedAt } from '../types'
+import type { DomainDeps } from '../../domain-deps'
 import type { ParseProcessingIdFn } from '../shared/steps/parse-processing-id.spec'
 import type { ParseProcessingFailureReasonFn } from '../shared/steps/parse-processing-failure-reason.spec'
 import type { FailProcessingFn } from './core/fail-processing.spec'
@@ -14,9 +14,9 @@ type Steps = {
 }
 
 type Deps = {
-    loadState: (id: string) => Promise<IncomingProcessing | null>
-    generateFailedAt: () => Promise<FailedAt>
-    save: (aggregate: FailedProcessing) => Promise<void>
+    getIncomingProcessingById: DomainDeps['getIncomingProcessingById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertIncomingProcessing: DomainDeps['upsertIncomingProcessing']
 }
 
 const failProcessingShellFactory =
@@ -29,24 +29,25 @@ const failProcessingShellFactory =
         const parsedReason = steps.parseProcessingFailureReason(input.cmd.reason)
         if (!parsedReason.ok) return parsedReason as any
 
-        const state = await deps.loadState(parsedId.value)
-        if (!state) return { ok: false, errors: ['not_found'] } as any
+        const stateResult = await deps.getIncomingProcessingById(parsedId.value)
+        if (stateResult.successType.includes('not-found')) return { ok: false, errors: ['not_found'] } as any
 
-        const failedAt = await deps.generateFailedAt()
+        const failedAtResult = await deps.generateTimestamp()
+        const failedAt = failedAtResult.value
 
         const result = steps.failProcessingCore({
             cmd: { processingId: parsedId.value, reason: parsedReason.value },
-            state,
+            state: stateResult.value!,
             ctx: { failedAt },
         })
         if (!result.ok) return result as any
 
-        await deps.save(result.value)
+        await deps.upsertIncomingProcessing(result.value)
 
         return { ok: true, value: result.value, successType: result.successType }
     }
 
-export const failProcessing = failProcessingShellFactory({
+export const _failProcessing = failProcessingShellFactory({
     parseProcessingId,
     parseProcessingFailureReason,
     failProcessingCore,

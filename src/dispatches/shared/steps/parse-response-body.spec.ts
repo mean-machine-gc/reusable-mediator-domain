@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ResponseBody, ResponseBodyFailure } from '../../types'
+import type { ResponseBody, ResponseBodyValidations } from '../../types'
 
 export type ParseResponseBodyFn = SpecFn<
     unknown,
     ResponseBody,
-    ResponseBodyFailure,
+    ResponseBodyValidations,
     'response-body-parsed'
 >
 

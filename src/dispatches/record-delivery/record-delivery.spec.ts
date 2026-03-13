@@ -1,6 +1,7 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
 import type {
-    DispatchIdFailure,
+    DispatchIdValidations,
     DeliveredDispatch,
     AttemptedDispatch,
     FailedDispatch,
@@ -19,22 +20,23 @@ export type RecordDeliveryOutput = DeliveredDispatch | AttemptedDispatch | Faile
 export type RecordDeliveryShellFn = SpecFn<
     ShellInput,
     RecordDeliveryOutput,
-    | DispatchIdFailure
+    | DispatchIdValidations
     | 'not_found'
     | 'already_terminal',
     'delivered' | 'attempt-recorded' | 'max-attempts-exhausted'
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseDispatchId', type: 'step', description: 'Parse and validate the dispatch ID', spec: parseDispatchIdSpec as unknown as Spec<AnyFn> },
-    { name: 'loadState', type: 'dep', description: 'Load aggregate state from persistence' },
+    { name: 'parseDispatchId', type: 'step', description: 'Parse and validate the dispatch ID', spec: asStepSpec(parseDispatchIdSpec) },
+    { name: 'getDispatchById', type: 'dep', description: 'Load aggregate state from persistence' },
     { name: 'deliver', type: 'dep', description: 'Attempt HTTP delivery to destination, returns DeliveryAttempt' },
     { name: 'getMaxAttempts', type: 'dep', description: 'Retrieve the max attempts configuration' },
-    { name: 'recordDeliveryCore', type: 'step', description: 'Evaluate attempt result, transition state accordingly', spec: recordDeliverySpec as unknown as Spec<AnyFn> },
-    { name: 'save', type: 'dep', description: 'Persist the updated aggregate' },
+    { name: 'recordDeliveryCore', type: 'step', description: 'Evaluate attempt result, transition state accordingly', spec: asStepSpec(recordDeliverySpec) },
+    { name: 'upsertDispatch', type: 'dep', description: 'Persist the updated aggregate' },
 ]
 
 export const recordDeliveryShellSpec: Spec<RecordDeliveryShellFn> = {
+    document: true,
     steps,
     shouldFailWith: {
         not_found: {

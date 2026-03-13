@@ -1,94 +1,120 @@
 import type { PollValidatedFn } from './poll-validated.spec'
-import type { ValidatedProcessing, MediationOutcome } from '../../incoming-processing/types'
-import type { ActiveMediation, TransformRegistry } from '../../mediation/types'
-import type { Result } from '../../shared/spec-framework'
+import type { DomainDeps } from '../../domain-deps'
 import type { MediatedEntry, MediationFailureEntry } from '../types'
 import type { MediateAllFn } from './steps/mediate-all.spec'
 import { mediateAll } from './steps/mediate-all'
+import { _createDispatch } from '../../dispatches/create-dispatch/create-dispatch'
+import { _mediateProcessing } from '../../incoming-processing/mediate-processing/mediate-processing'
+import { _failProcessing } from '../../incoming-processing/fail-processing/fail-processing'
 
 type Steps = {
     mediateAll: MediateAllFn['signature']
+    createDispatch: typeof _createDispatch
+    mediateProcessing: typeof _mediateProcessing
+    failProcessing: typeof _failProcessing
 }
 
 type Deps = {
-    fetchValidated: (batchSize: number) => Promise<ValidatedProcessing[]>
-    findActiveMediationsByTopic: (topic: string) => Promise<ActiveMediation[]>
-    getTransformRegistry: () => Promise<TransformRegistry>
-    generateDispatchId: () => Promise<string>
-    createDispatch: (input: { cmd: { dispatchId: string; processingId: string; mediationId: string; destination: string; event: any } }) => Promise<Result<any, string, string>>
-    mediateProcessing: (input: { cmd: { processingId: string; outcomes: MediationOutcome[] } }) => Promise<Result<any, string, string>>
-    failProcessing: (input: { cmd: { processingId: string; reason: string } }) => Promise<Result<any, string, string>>
+    findIncomingProcessingsByState: DomainDeps['findIncomingProcessingsByState']
+    findActiveMediationsByTopic: DomainDeps['findActiveMediationsByTopic']
+    getTransformRegistry: DomainDeps['getTransformRegistry']
+    generateId: DomainDeps['generateId']
+    getDispatchById: DomainDeps['getDispatchById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertDispatch: DomainDeps['upsertDispatch']
+    getIncomingProcessingById: DomainDeps['getIncomingProcessingById']
+    upsertIncomingProcessing: DomainDeps['upsertIncomingProcessing']
 }
 
 const pollValidatedFactory =
     (steps: Steps) =>
-    (deps: Deps): PollValidatedFn['asyncSignature'] =>
-    async (input) => {
-        const batch = await deps.fetchValidated(input.batchSize)
+    (deps: Deps): PollValidatedFn['asyncSignature'] => {
+        const doCreateDispatch = steps.createDispatch({
+            getDispatchById: deps.getDispatchById,
+            generateTimestamp: deps.generateTimestamp,
+            upsertDispatch: deps.upsertDispatch,
+        })
+        const doMediateProcessing = steps.mediateProcessing({
+            getIncomingProcessingById: deps.getIncomingProcessingById,
+            generateTimestamp: deps.generateTimestamp,
+            upsertIncomingProcessing: deps.upsertIncomingProcessing,
+        })
+        const doFailProcessing = steps.failProcessing({
+            getIncomingProcessingById: deps.getIncomingProcessingById,
+            generateTimestamp: deps.generateTimestamp,
+            upsertIncomingProcessing: deps.upsertIncomingProcessing,
+        })
 
-        if (batch.length === 0) {
-            return { ok: true, value: { mediated: [], failed: [] }, successType: ['empty-batch'] }
-        }
+        return async (input) => {
+            const batchResult = await deps.findIncomingProcessingsByState({ states: ['validated'], batchSize: input.batchSize })
 
-        const mediated: MediatedEntry[] = []
-        const failed: MediationFailureEntry[] = []
-
-        for (const record of batch) {
-            try {
-                const mediations = await deps.findActiveMediationsByTopic(record.topic)
-                const registry = await deps.getTransformRegistry()
-
-                const result = steps.mediateAll({
-                    event: record.event,
-                    mediations,
-                    registry,
-                })
-
-                if (!result.ok) {
-                    throw new Error(result.errors.join(', '))
-                }
-
-                const outcomes = result.value
-                const dispatches: { dispatchId: string; destination: string }[] = []
-                const skipped: string[] = []
-
-                for (const outcome of outcomes) {
-                    if (outcome.result === 'dispatched') {
-                        const dispatchId = await deps.generateDispatchId()
-
-                        await deps.createDispatch({
-                            cmd: {
-                                dispatchId,
-                                processingId: record.id,
-                                mediationId: outcome.mediationId,
-                                destination: outcome.destination,
-                                event: outcome.event,
-                            },
-                        })
-
-                        dispatches.push({ dispatchId, destination: outcome.destination })
-                    } else {
-                        skipped.push(outcome.mediationId)
-                    }
-                }
-
-                await deps.mediateProcessing({
-                    cmd: { processingId: record.id, outcomes },
-                })
-
-                mediated.push({ processingId: record.id, dispatches, skipped })
-            } catch (err) {
-                const reason = err instanceof Error ? err.message : String(err)
-                await deps.failProcessing({
-                    cmd: { processingId: record.id, reason },
-                })
-                failed.push({ processingId: record.id, errors: [reason] })
+            if (batchResult.successType.includes('empty')) {
+                return { ok: true, value: { mediated: [], failed: [] }, successType: ['empty-batch'] }
             }
-        }
 
-        return { ok: true, value: { mediated, failed }, successType: ['batch-processed'] }
+            const mediated: MediatedEntry[] = []
+            const failed: MediationFailureEntry[] = []
+
+            for (const record of batchResult.value) {
+                try {
+                    const mediationsResult = await deps.findActiveMediationsByTopic(record.topic)
+                    const registryResult = await deps.getTransformRegistry()
+
+                    const result = steps.mediateAll({
+                        event: record.event,
+                        mediations: mediationsResult.value,
+                        registry: registryResult.value,
+                    })
+
+                    if (!result.ok) {
+                        throw new Error(result.errors.join(', '))
+                    }
+
+                    const outcomes = result.value
+                    const dispatches: { dispatchId: string; destination: string }[] = []
+                    const skipped: string[] = []
+
+                    for (const outcome of outcomes) {
+                        if (outcome.result === 'dispatched') {
+                            const dispatchIdResult = await deps.generateId()
+
+                            await doCreateDispatch({
+                                cmd: {
+                                    dispatchId: dispatchIdResult.value,
+                                    processingId: record.id,
+                                    mediationId: outcome.mediationId,
+                                    destination: outcome.destination,
+                                    event: outcome.event,
+                                },
+                            })
+
+                            dispatches.push({ dispatchId: dispatchIdResult.value, destination: outcome.destination })
+                        } else {
+                            skipped.push(outcome.mediationId)
+                        }
+                    }
+
+                    await doMediateProcessing({
+                        cmd: { processingId: record.id, outcomes },
+                    })
+
+                    mediated.push({ processingId: record.id, dispatches, skipped })
+                } catch (err) {
+                    const reason = err instanceof Error ? err.message : String(err)
+                    await doFailProcessing({
+                        cmd: { processingId: record.id, reason },
+                    })
+                    failed.push({ processingId: record.id, errors: [reason] })
+                }
+            }
+
+            return { ok: true, value: { mediated, failed }, successType: ['batch-processed'] }
+        }
     }
 
-export const pollValidated = pollValidatedFactory({
+export const _pollValidated = pollValidatedFactory({
     mediateAll,
+    createDispatch: _createDispatch,
+    mediateProcessing: _mediateProcessing,
+    failProcessing: _failProcessing,
 })

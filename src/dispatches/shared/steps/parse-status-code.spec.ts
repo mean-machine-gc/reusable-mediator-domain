@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { StatusCode, StatusCodeFailure } from '../../types'
+import type { StatusCode, StatusCodeValidations } from '../../types'
 
 export type ParseStatusCodeFn = SpecFn<
     unknown,
     StatusCode,
-    StatusCodeFailure,
+    StatusCodeValidations,
     'status-code-parsed'
 >
 

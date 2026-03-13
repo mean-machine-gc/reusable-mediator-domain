@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { Topic, TopicFailure } from '../../types'
+import type { Topic, TopicValidations } from '../../types'
 
 export type ParseTopicFn = SpecFn<
     unknown,
     Topic,
-    TopicFailure,
+    TopicValidations,
     'topic-parsed'
 >
 

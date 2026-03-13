@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { DispatchId, DispatchIdFailure } from '../../types'
+import type { DispatchId, DispatchIdValidations } from '../../types'
 
 export type ParseDispatchIdFn = SpecFn<
     unknown,
     DispatchId,
-    DispatchIdFailure,
+    DispatchIdValidations,
     'dispatch-id-parsed'
 >
 

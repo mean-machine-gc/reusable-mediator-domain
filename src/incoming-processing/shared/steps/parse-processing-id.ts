@@ -1,17 +1,15 @@
+import { Value } from '@sinclair/typebox/value'
+import { ProcessingId } from '../../schemas'
 import type { ParseProcessingIdFn } from './parse-processing-id.spec'
 
 export const parseProcessingId: ParseProcessingIdFn['signature'] = (raw) => {
-    if (typeof raw !== 'string')
-        return { ok: false, errors: ['not_a_string'] }
+    if (typeof raw === 'string' && /<script|javascript:|on\w+\s*=/i.test(raw))
+        return { ok: false, errors: ['script_injection'] }
 
-    const errors: ParseProcessingIdFn['failures'][] = []
+    if (!Value.Check(ProcessingId, raw)) {
+        const details = [...Value.Errors(ProcessingId, raw)].map(e => e.message)
+        return { ok: false, errors: ['invalid_processing_id'], details }
+    }
 
-    if (raw.length === 0) errors.push('empty')
-    if (raw.length > 64) errors.push('too_long_max_64')
-    if (/<script|javascript:|on\w+\s*=/i.test(raw)) errors.push('script_injection')
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw))
-        errors.push('not_a_uuid')
-
-    if (errors.length > 0) return { ok: false, errors }
     return { ok: true, value: raw, successType: ['processing-id-parsed'] }
 }

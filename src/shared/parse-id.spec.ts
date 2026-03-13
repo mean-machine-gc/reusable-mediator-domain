@@ -1,14 +1,14 @@
-import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { MediationId, MediationIdValidations } from '../../types'
+import type { SpecFn, Spec } from './spec-framework'
+import type { ID, IDValidations } from './primitives'
 
-export type ParseMediationIdFn = SpecFn<
+export type ParseIdFn = SpecFn<
     unknown,
-    MediationId,
-    MediationIdValidations,
-    'mediation-id-parsed'
+    ID,
+    IDValidations,
+    'id-parsed'
 >
 
-export const parseMediationIdSpec: Spec<ParseMediationIdFn> = {
+export const parseIdSpec: Spec<ParseIdFn> = {
     shouldFailWith: {
         not_a_string: {
             description: 'Input is not a string',
@@ -17,6 +17,7 @@ export const parseMediationIdSpec: Spec<ParseMediationIdFn> = {
                 { description: 'null input', whenInput: null },
                 { description: 'undefined input', whenInput: undefined },
                 { description: 'object input', whenInput: { id: 'abc' } },
+                { description: 'boolean input', whenInput: true },
             ],
         },
         empty: {
@@ -48,8 +49,8 @@ export const parseMediationIdSpec: Spec<ParseMediationIdFn> = {
         },
     },
     shouldSucceedWith: {
-        'mediation-id-parsed': {
-            description: 'Input is a valid UUID mediation ID',
+        'id-parsed': {
+            description: 'Input is a valid UUID',
             examples: [
                 {
                     description: 'valid UUID v4',
@@ -65,7 +66,7 @@ export const parseMediationIdSpec: Spec<ParseMediationIdFn> = {
         },
     },
     shouldAssert: {
-        'mediation-id-parsed': {
+        'id-parsed': {
             'output-equals-input': {
                 description: 'Parsed value equals the input string',
                 assert: (input, output) => input === output,

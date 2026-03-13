@@ -1,6 +1,7 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
-import type { ToDeliverDispatch, DispatchIdFailure } from '../types'
-import type { ProcessingIdFailure, MediationIdFailure, DestinationFailure } from '../../shared/types'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
+import type { ToDeliverDispatch, DispatchIdValidations } from '../types'
+import type { ProcessingIdValidations, MediationIdValidations, DestinationValidations } from '../../shared/types'
 import { parseDispatchIdSpec } from '../shared/steps/parse-dispatch-id.spec'
 import { createDispatchSpec } from './core/create-dispatch.spec'
 
@@ -17,23 +18,24 @@ type ShellInput = {
 export type CreateDispatchShellFn = SpecFn<
     ShellInput,
     ToDeliverDispatch,
-    | DispatchIdFailure
-    | ProcessingIdFailure
-    | MediationIdFailure
-    | DestinationFailure
+    | DispatchIdValidations
+    | ProcessingIdValidations
+    | MediationIdValidations
+    | DestinationValidations
     | 'already_exists',
     'dispatch-created'
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseDispatchId', type: 'step', description: 'Parse and validate the dispatch ID', spec: parseDispatchIdSpec as unknown as Spec<AnyFn> },
-    { name: 'loadState', type: 'dep', description: 'Load existing aggregate state from persistence (null if not found)' },
-    { name: 'generateCreatedAt', type: 'dep', description: 'Generate created timestamp from clock' },
-    { name: 'createDispatchCore', type: 'step', description: 'Validate state gate and assemble ToDeliverDispatch', spec: createDispatchSpec as unknown as Spec<AnyFn> },
-    { name: 'save', type: 'dep', description: 'Persist the new aggregate' },
+    { name: 'parseDispatchId', type: 'step', description: 'Parse and validate the dispatch ID', spec: asStepSpec(parseDispatchIdSpec) },
+    { name: 'getDispatchById', type: 'dep', description: 'Load existing aggregate state from persistence (null if not found)' },
+    { name: 'generateTimestamp', type: 'dep', description: 'Generate created timestamp from clock' },
+    { name: 'createDispatchCore', type: 'step', description: 'Validate state gate and assemble ToDeliverDispatch', spec: asStepSpec(createDispatchSpec) },
+    { name: 'upsertDispatch', type: 'dep', description: 'Persist the new aggregate' },
 ]
 
 export const createDispatchShellSpec: Spec<CreateDispatchShellFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

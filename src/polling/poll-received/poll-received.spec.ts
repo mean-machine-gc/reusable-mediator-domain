@@ -1,6 +1,9 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
 import type { PollReceivedResult } from '../types'
 import { classifyValidationResultsSpec } from './steps/classify-validation-results.spec'
+import { validateProcessingShellSpec } from '../../incoming-processing/validate-processing/validate-processing.spec'
+import { failProcessingShellSpec } from '../../incoming-processing/fail-processing/fail-processing.spec'
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -26,15 +29,16 @@ export type PollReceivedFn = SpecFn<
 //   4. Assemble summary from outcomes
 
 const steps: StepInfo[] = [
-    { name: 'fetchReceived', type: 'dep', description: 'Fetch up to batchSize processing records in received state' },
-    { name: 'validateProcessing', type: 'dep', description: 'Call validateProcessing shell for a single record' },
-    { name: 'failProcessing', type: 'dep', description: 'Transition a record to failed state on validation failure' },
-    { name: 'classifyValidationResults', type: 'step', description: 'Split results into validated and failed arrays', spec: classifyValidationResultsSpec as unknown as Spec<AnyFn> },
+    { name: 'findIncomingProcessingsByState', type: 'dep', description: 'Fetch up to batchSize processing records in received state' },
+    { name: 'validateProcessing', type: 'step', description: 'Call validateProcessing shell for a single record', spec: asStepSpec(validateProcessingShellSpec) },
+    { name: 'failProcessing', type: 'step', description: 'Transition a record to failed state on validation failure', spec: asStepSpec(failProcessingShellSpec) },
+    { name: 'classifyValidationResults', type: 'step', description: 'Split results into validated and failed arrays', spec: asStepSpec(classifyValidationResultsSpec) },
 ]
 
 // ── Spec ─────────────────────────────────────────────────────────────────────
 
 export const pollReceivedSpec: Spec<PollReceivedFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

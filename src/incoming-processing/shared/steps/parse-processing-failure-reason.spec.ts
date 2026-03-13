@@ -1,34 +1,27 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ProcessingFailureReason, ProcessingFailureReasonFailure } from '../../types'
+import type { ProcessingFailureReason } from '../../types'
+import { processingFailureReason as f } from '../../fixtures'
+
+export type ParseProcessingFailureReasonFailures = 'invalid_processing_failure_reason'
 
 export type ParseProcessingFailureReasonFn = SpecFn<
     unknown,
     ProcessingFailureReason,
-    ProcessingFailureReasonFailure,
+    ParseProcessingFailureReasonFailures,
     'processing-failure-reason-parsed'
 >
 
 export const parseProcessingFailureReasonSpec: Spec<ParseProcessingFailureReasonFn> = {
     shouldFailWith: {
-        not_a_string: {
-            description: 'Input is not a string',
+        invalid_processing_failure_reason: {
+            description: 'Input fails TypeBox validation (not a string, empty, too long)',
             examples: [
-                { description: 'number input', whenInput: 42 },
-                { description: 'null input', whenInput: null },
-                { description: 'undefined input', whenInput: undefined },
-                { description: 'object input', whenInput: { reason: 'failed' } },
-            ],
-        },
-        empty: {
-            description: 'Input is an empty string',
-            examples: [
-                { description: 'empty string', whenInput: '' },
-            ],
-        },
-        too_long_max_4096: {
-            description: 'Input exceeds 4096 characters',
-            examples: [
-                { description: 'string longer than 4096 chars', whenInput: 'a'.repeat(4097) },
+                { description: 'number input', whenInput: f.invalid.number },
+                { description: 'null input', whenInput: f.invalid.null },
+                { description: 'undefined input', whenInput: f.invalid.undefined },
+                { description: 'object input', whenInput: f.invalid.object },
+                { description: 'empty string', whenInput: f.invalid.empty },
+                { description: 'string longer than 4096 chars', whenInput: f.invalid.tooLong },
             ],
         },
     },
@@ -38,13 +31,13 @@ export const parseProcessingFailureReasonSpec: Spec<ParseProcessingFailureReason
             examples: [
                 {
                     description: 'short reason',
-                    whenInput: 'schema_validation_failed',
-                    then: 'schema_validation_failed',
+                    whenInput: f.valid.short,
+                    then: f.valid.short,
                 },
                 {
                     description: 'descriptive reason',
-                    whenInput: 'Event data does not conform to the resolved JSON Schema for patient-created/v1',
-                    then: 'Event data does not conform to the resolved JSON Schema for patient-created/v1',
+                    whenInput: f.valid.descriptive,
+                    then: f.valid.descriptive,
                 },
             ],
         },

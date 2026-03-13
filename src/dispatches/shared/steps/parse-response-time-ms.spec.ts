@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { ResponseTimeMs, ResponseTimeMsFailure } from '../../types'
+import type { ResponseTimeMs, ResponseTimeMsValidations } from '../../types'
 
 export type ParseResponseTimeMsFn = SpecFn<
     unknown,
     ResponseTimeMs,
-    ResponseTimeMsFailure,
+    ResponseTimeMsValidations,
     'response-time-ms-parsed'
 >
 

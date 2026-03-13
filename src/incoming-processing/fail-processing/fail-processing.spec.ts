@@ -1,6 +1,9 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
-import type { FailedProcessing, ProcessingIdFailure, ProcessingFailureReasonFailure } from '../types'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
+import type { FailedProcessing } from '../types'
+import type { ParseProcessingIdFailures } from '../shared/steps/parse-processing-id.spec'
 import { parseProcessingIdSpec } from '../shared/steps/parse-processing-id.spec'
+import type { ParseProcessingFailureReasonFailures } from '../shared/steps/parse-processing-failure-reason.spec'
 import { parseProcessingFailureReasonSpec } from '../shared/steps/parse-processing-failure-reason.spec'
 import { failProcessingSpec } from './core/fail-processing.spec'
 
@@ -9,23 +12,24 @@ type ShellInput = { cmd: { processingId: unknown; reason: unknown } }
 export type FailProcessingShellFn = SpecFn<
     ShellInput,
     FailedProcessing,
-    | ProcessingIdFailure
-    | ProcessingFailureReasonFailure
+    | ParseProcessingIdFailures
+    | ParseProcessingFailureReasonFailures
     | 'not_found'
     | 'already_terminal',
     'processing-failed'
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseProcessingId', type: 'step', description: 'Parse and validate the processing ID', spec: parseProcessingIdSpec as unknown as Spec<AnyFn> },
-    { name: 'parseProcessingFailureReason', type: 'step', description: 'Parse and validate the failure reason', spec: parseProcessingFailureReasonSpec as unknown as Spec<AnyFn> },
-    { name: 'loadState', type: 'dep', description: 'Load aggregate state from persistence' },
-    { name: 'generateFailedAt', type: 'dep', description: 'Generate failed timestamp from clock' },
-    { name: 'failProcessingCore', type: 'step', description: 'Validate state gate and transition to failed', spec: failProcessingSpec as unknown as Spec<AnyFn> },
-    { name: 'save', type: 'dep', description: 'Persist the updated aggregate' },
+    { name: 'parseProcessingId', type: 'step', description: 'Parse and validate the processing ID', spec: asStepSpec(parseProcessingIdSpec) },
+    { name: 'parseProcessingFailureReason', type: 'step', description: 'Parse and validate the failure reason', spec: asStepSpec(parseProcessingFailureReasonSpec) },
+    { name: 'getIncomingProcessingById', type: 'dep', description: 'Load aggregate state from persistence' },
+    { name: 'generateTimestamp', type: 'dep', description: 'Generate failed timestamp from clock' },
+    { name: 'failProcessingCore', type: 'step', description: 'Validate state gate and transition to failed', spec: asStepSpec(failProcessingSpec) },
+    { name: 'upsertIncomingProcessing', type: 'dep', description: 'Persist the updated aggregate' },
 ]
 
 export const failProcessingShellSpec: Spec<FailProcessingShellFn> = {
+    document: true,
     steps,
     shouldFailWith: {
         not_found: {

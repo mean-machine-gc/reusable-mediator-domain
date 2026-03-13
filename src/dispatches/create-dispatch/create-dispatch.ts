@@ -1,5 +1,5 @@
 import type { CreateDispatchShellFn } from './create-dispatch.spec'
-import type { Dispatch, ToDeliverDispatch, CreatedAt } from '../types'
+import type { DomainDeps } from '../../domain-deps'
 import type { ParseDispatchIdFn } from '../shared/steps/parse-dispatch-id.spec'
 import type { CreateDispatchFn } from './core/create-dispatch.spec'
 import { parseDispatchId } from '../shared/steps/parse-dispatch-id'
@@ -11,9 +11,9 @@ type Steps = {
 }
 
 type Deps = {
-    loadState: (id: string) => Promise<Dispatch | null>
-    generateCreatedAt: () => Promise<CreatedAt>
-    save: (aggregate: ToDeliverDispatch) => Promise<void>
+    getDispatchById: DomainDeps['getDispatchById']
+    generateTimestamp: DomainDeps['generateTimestamp']
+    upsertDispatch: DomainDeps['upsertDispatch']
 }
 
 const createDispatchShellFactory =
@@ -23,9 +23,11 @@ const createDispatchShellFactory =
         const parsed = steps.parseDispatchId(input.cmd.dispatchId)
         if (!parsed.ok) return parsed as any
 
-        const state = await deps.loadState(parsed.value)
+        const stateResult = await deps.getDispatchById(parsed.value)
+        const state = stateResult.value
 
-        const createdAt = await deps.generateCreatedAt()
+        const createdAtResult = await deps.generateTimestamp()
+        const createdAt = createdAtResult.value
 
         const result = steps.createDispatchCore({
             cmd: {
@@ -40,12 +42,12 @@ const createDispatchShellFactory =
         })
         if (!result.ok) return result as any
 
-        await deps.save(result.value)
+        await deps.upsertDispatch(result.value)
 
         return { ok: true, value: result.value, successType: result.successType }
     }
 
-export const createDispatch = createDispatchShellFactory({
+export const _createDispatch = createDispatchShellFactory({
     parseDispatchId,
     createDispatchCore,
 })

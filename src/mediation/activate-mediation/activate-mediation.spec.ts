@@ -1,5 +1,6 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
-import type { ActiveMediation, MediationIdFailure } from '../types'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
+import type { ActiveMediation, MediationIdValidations } from '../types'
 import { parseMediationIdSpec } from '../shared/steps/parse-mediation-id.spec'
 import { activateMediationCoreSpec } from './core/activate-mediation.spec'
 
@@ -8,19 +9,20 @@ type ShellInput = { cmd: { mediationId: unknown } }
 export type ActivateMediationShellFn = SpecFn<
     ShellInput,
     ActiveMediation,
-    MediationIdFailure | 'already_active',
+    MediationIdValidations | 'already_active',
     'draft-activated' | 'reactivated'
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseMediationId', type: 'step', description: 'Parse and validate the mediation ID', spec: parseMediationIdSpec as unknown as Spec<AnyFn> },
-    { name: 'findMediation', type: 'dep', description: 'Fetch mediation from persistence' },
+    { name: 'parseMediationId', type: 'step', description: 'Parse and validate the mediation ID', spec: asStepSpec(parseMediationIdSpec) },
+    { name: 'getMediationById', type: 'dep', description: 'Fetch mediation from persistence' },
     { name: 'generateTimestamp', type: 'dep', description: 'Generate activation timestamp' },
-    { name: 'activateMediationCore', type: 'step', description: 'Run activation core logic', spec: activateMediationCoreSpec as unknown as Spec<AnyFn> },
-    { name: 'saveMediation', type: 'dep', description: 'Persist the activated mediation' },
+    { name: 'activateMediationCore', type: 'step', description: 'Run activation core logic', spec: asStepSpec(activateMediationCoreSpec) },
+    { name: 'upsertMediation', type: 'dep', description: 'Persist the activated mediation' },
 ]
 
 export const activateMediationShellSpec: Spec<ActivateMediationShellFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { Pipeline, PipelineFailure, FilterStep, TransformStep } from '../../types'
+import type { Pipeline, PipelineValidations, FilterStep, TransformStep } from '../../types'
 
 export type ParsePipelineFn = SpecFn<
     unknown,
     Pipeline,
-    PipelineFailure,
+    PipelineValidations,
     'pipeline-parsed'
 >
 

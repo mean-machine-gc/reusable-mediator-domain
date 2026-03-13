@@ -1,6 +1,8 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
 import type { PollDispatchesResult } from '../types'
 import { classifyDeliveryResultsSpec } from './steps/classify-delivery-results.spec'
+import { recordDeliveryShellSpec } from '../../dispatches/record-delivery/record-delivery.spec'
 
 // ── Input ────────────────────────────────────────────────────────────────────
 
@@ -27,14 +29,15 @@ export type PollDispatchesFn = SpecFn<
 //   4. Assemble summary
 
 const steps: StepInfo[] = [
-    { name: 'fetchDispatches', type: 'dep', description: 'Fetch up to batchSize dispatches in to-deliver or attempted state' },
-    { name: 'recordDelivery', type: 'dep', description: 'Call recordDelivery shell — attempts delivery and records outcome' },
-    { name: 'classifyDeliveryResults', type: 'step', description: 'Classify delivery outcomes into delivered, retrying, exhausted', spec: classifyDeliveryResultsSpec as unknown as Spec<AnyFn> },
+    { name: 'findDispatchesByState', type: 'dep', description: 'Fetch up to batchSize dispatches in to-deliver or attempted state' },
+    { name: 'recordDelivery', type: 'step', description: 'Call recordDelivery shell — attempts delivery and records outcome', spec: asStepSpec(recordDeliveryShellSpec) },
+    { name: 'classifyDeliveryResults', type: 'step', description: 'Classify delivery outcomes into delivered, retrying, exhausted', spec: asStepSpec(classifyDeliveryResultsSpec) },
 ]
 
 // ── Spec ─────────────────────────────────────────────────────────────────────
 
 export const pollDispatchesSpec: Spec<PollDispatchesFn> = {
+    document: true,
     steps,
     shouldFailWith: {},
     shouldSucceedWith: {

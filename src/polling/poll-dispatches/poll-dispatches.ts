@@ -1,46 +1,59 @@
 import type { PollDispatchesFn } from './poll-dispatches.spec'
 import type { DeliveryResultEntry } from './steps/classify-delivery-results.spec'
-import type { ToDeliverDispatch, AttemptedDispatch } from '../../dispatches/types'
-import type { Result } from '../../shared/spec-framework'
+import type { DomainDeps } from '../../domain-deps'
 import type { ClassifyDeliveryResultsFn } from './steps/classify-delivery-results.spec'
 import { classifyDeliveryResults } from './steps/classify-delivery-results'
+import { _recordDelivery } from '../../dispatches/record-delivery/record-delivery'
 
 type Steps = {
     classifyDeliveryResults: ClassifyDeliveryResultsFn['signature']
+    recordDelivery: typeof _recordDelivery
 }
 
 type Deps = {
-    fetchDispatches: (batchSize: number) => Promise<(ToDeliverDispatch | AttemptedDispatch)[]>
-    recordDelivery: (input: { cmd: { dispatchId: string } }) => Promise<Result<any, string, string>>
+    findDispatchesByState: DomainDeps['findDispatchesByState']
+    getDispatchById: DomainDeps['getDispatchById']
+    deliver: DomainDeps['deliver']
+    getMaxAttempts: DomainDeps['getMaxAttempts']
+    upsertDispatch: DomainDeps['upsertDispatch']
 }
 
 const pollDispatchesFactory =
     (steps: Steps) =>
-    (deps: Deps): PollDispatchesFn['asyncSignature'] =>
-    async (input) => {
-        const batch = await deps.fetchDispatches(input.batchSize)
+    (deps: Deps): PollDispatchesFn['asyncSignature'] => {
+        const doRecordDelivery = steps.recordDelivery({
+            getDispatchById: deps.getDispatchById,
+            deliver: deps.deliver,
+            getMaxAttempts: deps.getMaxAttempts,
+            upsertDispatch: deps.upsertDispatch,
+        })
 
-        if (batch.length === 0) {
-            return { ok: true, value: { delivered: [], retrying: [], exhausted: [] }, successType: ['empty-batch'] }
-        }
+        return async (input) => {
+            const batchResult = await deps.findDispatchesByState({ states: ['to-deliver', 'attempted'], batchSize: input.batchSize })
 
-        const entries: DeliveryResultEntry[] = []
-
-        for (const dispatch of batch) {
-            const result = await deps.recordDelivery({ cmd: { dispatchId: dispatch.id } })
-
-            if (result.ok) {
-                const successType = result.successType[0] as DeliveryResultEntry['successType']
-                entries.push({ dispatchId: dispatch.id, successType })
+            if (batchResult.successType.includes('empty')) {
+                return { ok: true, value: { delivered: [], retrying: [], exhausted: [] }, successType: ['empty-batch'] }
             }
+
+            const entries: DeliveryResultEntry[] = []
+
+            for (const dispatch of batchResult.value) {
+                const result = await doRecordDelivery({ cmd: { dispatchId: dispatch.id } })
+
+                if (result.ok) {
+                    const successType = result.successType[0] as DeliveryResultEntry['successType']
+                    entries.push({ dispatchId: dispatch.id, successType })
+                }
+            }
+
+            const classified = steps.classifyDeliveryResults({ entries })
+            if (!classified.ok) return classified as any
+
+            return { ok: true, value: classified.value, successType: ['batch-processed'] }
         }
-
-        const classified = steps.classifyDeliveryResults({ entries })
-        if (!classified.ok) return classified as any
-
-        return { ok: true, value: classified.value, successType: ['batch-processed'] }
     }
 
-export const pollDispatches = pollDispatchesFactory({
+export const _pollDispatches = pollDispatchesFactory({
     classifyDeliveryResults,
+    recordDelivery: _recordDelivery,
 })

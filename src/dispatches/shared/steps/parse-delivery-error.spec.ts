@@ -1,10 +1,10 @@
 import type { SpecFn, Spec } from '../../../shared/spec-framework'
-import type { DeliveryError, DeliveryErrorFailure } from '../../types'
+import type { DeliveryError, DeliveryErrorValidations } from '../../types'
 
 export type ParseDeliveryErrorFn = SpecFn<
     unknown,
     DeliveryError,
-    DeliveryErrorFailure,
+    DeliveryErrorValidations,
     'delivery-error-parsed'
 >
 

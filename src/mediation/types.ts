@@ -1,22 +1,23 @@
 import type { CloudEvent } from 'cloudevents'
 import type {
-  MediationId, MediationIdFailure,
-  Topic, TopicFailure,
-  Destination, DestinationFailure,
+  MediationId, MediationIdValidations,
+  Topic, TopicValidations,
+  Destination, DestinationValidations,
 } from '../shared/types'
+import type { Timestamp, TimestampValidations } from '../shared/primitives'
 
 export type { Result } from '../shared/spec-framework'
 
 // ── Shared Domain Primitives (re-exported) ──────────────────────────────────
 export type {
-  MediationId, MediationIdFailure,
-  Topic, TopicFailure,
-  Destination, DestinationFailure,
+  MediationId, MediationIdValidations,
+  Topic, TopicValidations,
+  Destination, DestinationValidations,
 }
 
 // Filter primitives
 export type FieldPath = string
-export type FieldPathFailure =
+export type FieldPathValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_512'
@@ -25,7 +26,7 @@ export type FieldPathFailure =
   | 'script_injection'
 
 export type RegexPattern = string
-export type RegexPatternFailure =
+export type RegexPatternValidations =
   | 'not_a_string'
   | 'empty'
   | 'too_long_max_1024'
@@ -33,14 +34,14 @@ export type RegexPatternFailure =
   | 'script_injection'
 
 // Temporal
-export type CreatedAt = Date
-export type CreatedAtFailure = 'not_a_date'
+export type CreatedAt = Timestamp
+export type CreatedAtValidations = TimestampValidations
 
-export type ActivatedAt = Date
-export type ActivatedAtFailure = 'not_a_date'
+export type ActivatedAt = Timestamp
+export type ActivatedAtValidations = TimestampValidations
 
-export type DeactivatedAt = Date
-export type DeactivatedAtFailure = 'not_a_date'
+export type DeactivatedAt = Timestamp
+export type DeactivatedAtValidations = TimestampValidations
 
 // ── Filter Conditions ─────────────────────────────────────────────────────────
 
@@ -91,7 +92,7 @@ export type FilterRules = {
   conditions: FilterCondition[]
 }
 
-export type FilterRulesFailure =
+export type FilterRulesValidations =
   | 'not_an_object'
   | 'missing_logic'
   | 'invalid_logic'
@@ -120,7 +121,7 @@ export type PipelineStep = FilterStep | TransformStep | EnrichStep
 
 export type Pipeline = PipelineStep[]
 
-export type PipelineFailure =
+export type PipelineValidations =
   | 'not_an_array'
   | 'empty'
   | 'invalid_step'

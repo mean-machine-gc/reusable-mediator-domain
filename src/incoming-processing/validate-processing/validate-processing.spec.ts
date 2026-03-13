@@ -1,5 +1,7 @@
-import type { SpecFn, Spec, StepInfo, AnyFn } from '../../shared/spec-framework'
-import type { ValidatedProcessing, ProcessingIdFailure } from '../types'
+import type { SpecFn, Spec, StepInfo } from '../../shared/spec-framework'
+import { asStepSpec } from '../../shared/spec-framework'
+import type { ValidatedProcessing } from '../types'
+import type { ParseProcessingIdFailures } from '../shared/steps/parse-processing-id.spec'
 import { parseProcessingIdSpec } from '../shared/steps/parse-processing-id.spec'
 import { validateProcessingSpec } from './core/validate-processing.spec'
 
@@ -8,7 +10,7 @@ type ShellInput = { cmd: { processingId: unknown } }
 export type ValidateProcessingShellFn = SpecFn<
     ShellInput,
     ValidatedProcessing,
-    | ProcessingIdFailure
+    | ParseProcessingIdFailures
     | 'not_found'
     | 'not_in_received_state'
     | 'schema_not_found'
@@ -17,15 +19,16 @@ export type ValidateProcessingShellFn = SpecFn<
 >
 
 const steps: StepInfo[] = [
-    { name: 'parseProcessingId', type: 'step', description: 'Parse and validate the processing ID', spec: parseProcessingIdSpec as unknown as Spec<AnyFn> },
-    { name: 'loadState', type: 'dep', description: 'Load aggregate state from persistence' },
+    { name: 'parseProcessingId', type: 'step', description: 'Parse and validate the processing ID', spec: asStepSpec(parseProcessingIdSpec) },
+    { name: 'getIncomingProcessingById', type: 'dep', description: 'Load aggregate state from persistence' },
     { name: 'resolveSchema', type: 'dep', description: 'Resolve JSON Schema from registry using dataschemaUri' },
-    { name: 'generateValidatedAt', type: 'dep', description: 'Generate validated timestamp from clock' },
-    { name: 'validateProcessingCore', type: 'step', description: 'Validate event data against schema and transition to validated', spec: validateProcessingSpec as unknown as Spec<AnyFn> },
-    { name: 'save', type: 'dep', description: 'Persist the updated aggregate' },
+    { name: 'generateTimestamp', type: 'dep', description: 'Generate validated timestamp from clock' },
+    { name: 'validateProcessingCore', type: 'step', description: 'Validate event data against schema and transition to validated', spec: asStepSpec(validateProcessingSpec) },
+    { name: 'upsertIncomingProcessing', type: 'dep', description: 'Persist the updated aggregate' },
 ]
 
 export const validateProcessingShellSpec: Spec<ValidateProcessingShellFn> = {
+    document: true,
     steps,
     shouldFailWith: {
         not_found: {
