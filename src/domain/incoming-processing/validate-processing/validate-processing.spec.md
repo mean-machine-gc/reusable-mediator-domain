@@ -9,10 +9,10 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetIncomingProcessingById` | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
-| 2 | `safeResolveSchema` | `SAFE-DEP` | Resolve and validate JSON Schema from registry | `invalid_schema` |
-| 3 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate validated timestamp | `invalid_timestamp` |
-| 4 | `validateProcessingCore` | `STEP` | Validate event data against schema and transition to validated | `not_in_received_state`, `schema_validation_failed` |
+| 1 | [`safeGetIncomingProcessingById`](../safe-get-incoming-processing-by-id.spec.md) | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
+| 2 | [`safeResolveSchema`](../../shared/safe-resolve-schema.spec.md) | `SAFE-DEP` | Resolve and validate JSON Schema from registry | `invalid_schema` |
+| 3 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate validated timestamp | `invalid_timestamp` |
+| 4 | [`validateProcessingCore`](core/validate-processing.spec.md) | `STEP` | Validate event data against schema and transition to validated | `not_in_received_state`, `schema_validation_failed` |
 | 5 | `upsertIncomingProcessing` | `DEP` | Persist the updated aggregate | -- |
 
 ---

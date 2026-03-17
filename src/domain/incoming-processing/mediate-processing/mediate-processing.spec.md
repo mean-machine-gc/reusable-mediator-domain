@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetIncomingProcessingById` | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate mediated timestamp | `invalid_timestamp` |
-| 3 | `mediateProcessingCore` | `STEP` | Attach outcomes and transition to mediated | `not_in_validated_state` |
+| 1 | [`safeGetIncomingProcessingById`](../safe-get-incoming-processing-by-id.spec.md) | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate mediated timestamp | `invalid_timestamp` |
+| 3 | [`mediateProcessingCore`](core/mediate-processing.spec.md) | `STEP` | Attach outcomes and transition to mediated | `not_in_validated_state` |
 | 4 | `upsertIncomingProcessing` | `DEP` | Persist the updated aggregate | -- |
 
 ---

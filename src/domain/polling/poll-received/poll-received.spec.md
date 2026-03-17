@@ -10,9 +10,9 @@
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
 | 1 | `findIncomingProcessingsByState` | `DEP` | Fetch up to batchSize processing records in received state | -- |
-| 2 | `validateProcessing` | `STEP` | Call validateProcessing shell for a single record | `not_found`, `schema_not_found` |
-| 3 | `failProcessing` | `STEP` | Transition a record to failed state on validation failure | `not_found` |
-| 4 | `classifyValidationResults` | `STEP` | Split results into validated and failed arrays | -- |
+| 2 | [`validateProcessing`](../../incoming-processing/validate-processing/validate-processing.spec.md) | `STEP` | Call validateProcessing shell for a single record | `not_found`, `schema_not_found` |
+| 3 | [`failProcessing`](../../incoming-processing/fail-processing/fail-processing.spec.md) | `STEP` | Transition a record to failed state on validation failure | `not_found` |
+| 4 | [`classifyValidationResults`](steps/classify-validation-results.spec.md) | `STEP` | Split results into validated and failed arrays | -- |
 
 ---
 

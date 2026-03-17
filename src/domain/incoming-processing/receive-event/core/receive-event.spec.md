@@ -1,7 +1,6 @@
-# receive-event-core
+# receive-event
 
-> Auto-generated from `receive-event-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
-> For business-friendly documentation, see `/docs/`.
+> Auto-generated from `receive-event.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 
 ---
 

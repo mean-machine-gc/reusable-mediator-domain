@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetMediationById` | `SAFE-DEP` | Fetch and validate mediation from persistence | `invalid_mediation` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate deactivation timestamp | `invalid_timestamp` |
-| 3 | `deactivateMediationCore` | `STEP` | Run deactivation core logic | -- |
+| 1 | [`safeGetMediationById`](../safe-get-mediation-by-id.spec.md) | `SAFE-DEP` | Fetch and validate mediation from persistence | `invalid_mediation` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate deactivation timestamp | `invalid_timestamp` |
+| 3 | [`deactivateMediationCore`](core/deactivate-mediation.spec.md) | `STEP` | Run deactivation core logic | -- |
 | 4 | `upsertMediation` | `DEP` | Persist the deactivated mediation | -- |
 
 ---

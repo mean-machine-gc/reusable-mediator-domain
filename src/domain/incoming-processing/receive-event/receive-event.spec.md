@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetIncomingProcessingById` | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate received timestamp | `invalid_timestamp` |
-| 3 | `receiveEventCore` | `STEP` | Extract event info and assemble ReceivedProcessing | `already_exists`, `missing_event_type`, `missing_dataschema` |
+| 1 | [`safeGetIncomingProcessingById`](../safe-get-incoming-processing-by-id.spec.md) | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate received timestamp | `invalid_timestamp` |
+| 3 | [`receiveEventCore`](core/receive-event.spec.md) | `STEP` | Extract event info and assemble ReceivedProcessing | `already_exists`, `missing_event_type`, `missing_dataschema` |
 | 4 | `upsertIncomingProcessing` | `DEP` | Persist the new aggregate | -- |
 
 ---

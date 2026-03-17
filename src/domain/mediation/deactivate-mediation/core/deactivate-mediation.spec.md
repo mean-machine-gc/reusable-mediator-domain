@@ -9,8 +9,8 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `checkDeactivatableState` | `STEP` | Verify mediation is in active state | `not_active` |
-| 2 | `assembleDeactivatedMediation` | `STEP` | Assemble deactivated mediation | -- |
+| 1 | [`checkDeactivatableState`](../../shared/steps/check-deactivatable-state.spec.md) | `STEP` | Verify mediation is in active state | `not_active` |
+| 2 | [`assembleDeactivatedMediation`](../../shared/steps/assemble-deactivated-mediation.spec.md) | `STEP` | Assemble deactivated mediation | -- |
 | 3 | `evaluateSuccessType` | `STEP` | Classify the success outcome | -- |
 
 ---

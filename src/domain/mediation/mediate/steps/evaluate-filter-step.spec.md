@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `resolveField` | `STEP` | Resolve field value from event | -- |
+| 1 | [`resolveField`](resolve-field.spec.md) | `STEP` | Resolve field value from event | -- |
 | 2 | `evaluateCondition` | `STRATEGY` | Evaluate condition against field value using operator-specific handler | -- |
-| 3 | `composeResults` | `STEP` | Compose boolean results with and/or logic | -- |
+| 3 | [`composeResults`](compose-results.spec.md) | `STEP` | Compose boolean results with and/or logic | -- |
 
 ---
 

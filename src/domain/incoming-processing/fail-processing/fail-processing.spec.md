@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetIncomingProcessingById` | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate failed timestamp | `invalid_timestamp` |
-| 3 | `failProcessingCore` | `STEP` | Validate state gate and transition to failed | `already_terminal` |
+| 1 | [`safeGetIncomingProcessingById`](../safe-get-incoming-processing-by-id.spec.md) | `SAFE-DEP` | Fetch and validate incoming processing from persistence | `invalid_incoming_processing` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate failed timestamp | `invalid_timestamp` |
+| 3 | [`failProcessingCore`](core/fail-processing.spec.md) | `STEP` | Validate state gate and transition to failed | `already_terminal` |
 | 4 | `upsertIncomingProcessing` | `DEP` | Persist the updated aggregate | -- |
 
 ---

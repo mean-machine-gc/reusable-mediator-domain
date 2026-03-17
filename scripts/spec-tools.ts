@@ -3,9 +3,30 @@
 // =============================================================================
 // Spec Tools — flatten specs into decision tables
 // Strategy-aware: produces main table (linear) + per-handler sub-tables.
+// Dependency graph: builds a navigable graph of spec nodes and step edges.
 // =============================================================================
 
 import type { Spec, StepInfo, StrategyStep } from '../src/domain/shared/spec-framework'
+import { relative, dirname } from 'path'
+
+// -- Dependency Graph ---------------------------------------------------------
+
+export type SpecNode = {
+    name: string          // kebab-case from filename
+    specPath: string      // absolute path to .spec.md
+    spec: object          // object reference (for lookup by identity)
+    edges: SpecEdge[]     // outgoing deps (populated after all nodes built)
+}
+
+export type SpecEdge = {
+    stepName: string      // e.g. 'checkActivatableState'
+    type: 'step' | 'safe-dep' | 'dep' | 'strategy'
+    target: SpecNode | null  // null for deps or unresolved refs
+}
+
+export type DependencyGraph = {
+    nodes: Map<object, SpecNode>  // lookup by spec object identity
+}
 
 // -- Types --------------------------------------------------------------------
 
@@ -26,6 +47,25 @@ export type FlatTable = {
     columns: FlatConstraint[]     // linear constraints only (no strategy handler details)
     successes: string[]
     strategies: StrategyTable[]   // one sub-table per handler
+}
+
+// -- linkStep -----------------------------------------------------------------
+
+function linkStep(
+    stepName: string,
+    specObj: object | undefined,
+    graph?: DependencyGraph,
+    currentPath?: string,
+): string {
+    if (!specObj || !graph || !currentPath) {
+        return `\`${stepName}\``
+    }
+    const node = graph.nodes.get(specObj)
+    if (!node) {
+        return `\`${stepName}\``
+    }
+    const rel = relative(dirname(currentPath), node.specPath)
+    return `[\`${stepName}\`](${rel})`
 }
 
 // -- flattenSpec --------------------------------------------------------------
@@ -239,7 +279,7 @@ export function toHandlerTables(table: FlatTable): string {
 
 // -- toStepTable --------------------------------------------------------------
 
-export function toStepTable(spec: any): string {
+export function toStepTable(spec: any, graph?: DependencyGraph, currentPath?: string): string {
     if (!spec.steps) return '_Atomic function — no pipeline steps._'
 
     const rows: string[][] = [
@@ -284,7 +324,11 @@ export function toStepTable(spec: any): string {
             ? failures.map(f => f.startsWith('`') ? f : `\`${f}\``).join(', ')
             : '--'
 
-        rows.push([String(i + 1), `\`${step.name}\``, typeStr!, step.description, failStr])
+        const nameCell = (step.type === 'step' || step.type === 'safe-dep')
+            ? linkStep(step.name, step.spec, graph, currentPath)
+            : `\`${step.name}\``
+
+        rows.push([String(i + 1), nameCell, typeStr!, step.description, failStr])
     }
 
     return rows.map(r => `| ${r.join(' | ')} |`).join('\n')
@@ -293,8 +337,8 @@ export function toStepTable(spec: any): string {
 // -- buildSpecMd --------------------------------------------------------------
 // Assembles the full .spec.md with strategy-aware tables.
 
-export function buildSpecMd(name: string, spec: any): string {
-    const pipeline = toStepTable(spec)
+export function buildSpecMd(name: string, spec: any, graph?: DependencyGraph, currentPath?: string): string {
+    const pipeline = toStepTable(spec, graph, currentPath)
     const table = flattenSpec(spec)
     const main = toMainTable(table)
     const handlers = toHandlerTables(table)
@@ -303,7 +347,13 @@ export function buildSpecMd(name: string, spec: any): string {
         `# ${name}`,
         '',
         `> Auto-generated from \`${name}.spec.ts\`. Do not edit — run \`npm run gen:specs\` to regenerate.`,
-        `> For business-friendly documentation, see \`/docs/\`.`,
+    ]
+
+    if (spec.document) {
+        parts.push(`> For business-friendly documentation, see \`/docs/\`.`)
+    }
+
+    parts.push(
         '',
         '---',
         '',
@@ -316,11 +366,123 @@ export function buildSpecMd(name: string, spec: any): string {
         '## Decision Table',
         '',
         main,
-    ]
+    )
 
     if (handlers) {
         parts.push('', '---', '', handlers)
     }
+
+    return parts.join('\n') + '\n'
+}
+
+// -- buildDependencyGraphMd ---------------------------------------------------
+// Generates a Mermaid flowchart showing the full spec dependency graph.
+
+export function buildDependencyGraphMd(graph: DependencyGraph): string {
+    const lines: string[] = []
+
+    // Collect all nodes that have edges (factories/composed specs)
+    // and all nodes referenced as targets (to include leaf nodes in the graph)
+    const nodesWithEdges: SpecNode[] = []
+    const referencedNodes = new Set<SpecNode>()
+
+    for (const node of graph.nodes.values()) {
+        if (node.edges.length > 0) {
+            nodesWithEdges.push(node)
+            for (const edge of node.edges) {
+                if (edge.target) referencedNodes.add(edge.target)
+            }
+        }
+    }
+
+    // Deduplicate nodes (multiple spec objects can point to the same file)
+    const seen = new Set<string>()
+    const uniqueNodes = nodesWithEdges.filter(n => {
+        if (seen.has(n.specPath)) return false
+        seen.add(n.specPath)
+        return true
+    })
+
+    // Build stable node IDs from spec paths
+    const nodeId = (node: SpecNode): string => {
+        // Use path relative to src/domain/ for readable IDs
+        const match = node.specPath.match(/src\/domain\/(.+)\.spec\.md$/)
+        return match ? match[1].replace(/\//g, '_') : node.name
+    }
+
+    const nodeLabel = (node: SpecNode): string => {
+        const match = node.specPath.match(/src\/domain\/(.+)\.spec\.md$/)
+        return match ? match[1] : node.name
+    }
+
+    // Collect dep placeholder nodes
+    let depCounter = 0
+    const depNodes: string[] = []
+
+    lines.push('```mermaid')
+    lines.push('flowchart TD')
+
+    // Declare nodes
+    const declaredIds = new Set<string>()
+    for (const node of uniqueNodes) {
+        const id = nodeId(node)
+        if (!declaredIds.has(id)) {
+            lines.push(`    ${id}["${nodeLabel(node)}"]`)
+            declaredIds.add(id)
+        }
+
+        // Declare target nodes that aren't already sources
+        for (const edge of node.edges) {
+            if (edge.target) {
+                const targetId = nodeId(edge.target)
+                if (!declaredIds.has(targetId)) {
+                    lines.push(`    ${targetId}["${nodeLabel(edge.target)}"]`)
+                    declaredIds.add(targetId)
+                }
+            }
+        }
+    }
+
+    // Declare edges
+    for (const node of uniqueNodes) {
+        const sourceId = nodeId(node)
+        for (const edge of node.edges) {
+            if (edge.target) {
+                const targetId = nodeId(edge.target)
+                const label = edge.type === 'strategy' ? 'strategy' : edge.stepName
+                lines.push(`    ${sourceId} -->|${label}| ${targetId}`)
+            } else if (edge.type === 'dep') {
+                const depId = `dep_${depCounter++}`
+                depNodes.push(depId)
+                lines.push(`    ${depId}[/"${edge.stepName} (dep)"/]`)
+                lines.push(`    ${sourceId} -.->|${edge.stepName}| ${depId}`)
+            }
+        }
+    }
+
+    // Style dep nodes
+    if (depNodes.length > 0) {
+        lines.push(`    style ${depNodes.join(',')} fill:#f5f5f5,stroke:#999,stroke-dasharray: 5 5`)
+    }
+
+    lines.push('```')
+
+    const parts = [
+        '---',
+        'title: Dependency Graph',
+        'nav_order: 99',
+        'mermaid: true',
+        '---',
+        '',
+        '# Dependency Graph',
+        '',
+        '> Auto-generated by `npm run gen:specs`. Do not edit.',
+        '',
+        '---',
+        '',
+        ...lines,
+        '',
+    ]
 
     return parts.join('\n') + '\n'
 }

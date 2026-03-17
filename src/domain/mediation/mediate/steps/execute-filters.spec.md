@@ -9,7 +9,7 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `evaluateFilterStep` | `STEP` | Evaluate a single filter step | -- |
+| 1 | [`evaluateFilterStep`](evaluate-filter-step.spec.md) | `STEP` | Evaluate a single filter step | -- |
 
 ---
 

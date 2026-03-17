@@ -1,7 +1,6 @@
-# record-delivery-core
+# record-delivery
 
-> Auto-generated from `record-delivery-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
-> For business-friendly documentation, see `/docs/`.
+> Auto-generated from `record-delivery.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 
 ---
 

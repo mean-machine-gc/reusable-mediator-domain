@@ -10,8 +10,8 @@
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
 | 1 | `findDispatchesByState` | `DEP` | Fetch up to batchSize dispatches in to-deliver or attempted state | -- |
-| 2 | `recordDelivery` | `STEP` | Call recordDelivery shell — attempts delivery and records outcome | `not_found` |
-| 3 | `classifyDeliveryResults` | `STEP` | Classify delivery outcomes into delivered, retrying, exhausted | -- |
+| 2 | [`recordDelivery`](../../dispatches/record-delivery/record-delivery.spec.md) | `STEP` | Call recordDelivery shell — attempts delivery and records outcome | `not_found` |
+| 3 | [`classifyDeliveryResults`](steps/classify-delivery-results.spec.md) | `STEP` | Classify delivery outcomes into delivered, retrying, exhausted | -- |
 
 ---
 

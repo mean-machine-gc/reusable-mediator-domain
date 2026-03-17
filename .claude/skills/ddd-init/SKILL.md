@@ -71,11 +71,12 @@ See [examples.md](examples.md) for the complete file contents.
 
 ## Step 4 — Create `scripts/generate-specs.ts`
 
-Auto-discovers specs with `document: true` via glob — no manual manifest needed.
+Auto-discovers all spec exports via glob — no manual manifest needed.
 Globs for `src/domain/**/*.spec.ts`, imports each file, and writes `.spec.md` files
-next to any spec that has `document: true`. These are **fully generated** structural
+next to every `.spec.ts` that exports a Spec object. These are **fully generated** structural
 docs — pipeline tables and decision tables. No prose sections, no manual editing.
-The file is overwritten on every run.
+The file is overwritten on every run. `document: true` controls whether a `/docs/` page
+is created (by the `ddd-documentation` skill), not `.spec.md` generation.
 
 Business-friendly prose documentation lives separately in `/docs/` and is managed
 by the `ddd-documentation` skill.
@@ -159,9 +160,9 @@ Run `npm install` to install glob and tsx.
 
 ## Step 10 — Verify
 
-Run `npm run gen:specs` to confirm the pipeline works. With no `document: true`
-specs it should report "No specs with document: true found — nothing to generate."
-and exit cleanly.
+Run `npm run gen:specs` to confirm the pipeline works. With no `.spec.ts` files
+it should report "No .spec.ts files found." and exit cleanly. With spec files but
+no exports it should report "No spec exports found — nothing to generate."
 
 ---
 
@@ -181,7 +182,7 @@ ddd-init complete:
   package.json              updated (gen:specs script, glob + tsx devDeps)
   .claude/hooks.json        created
   npm install               ran
-  npm run gen:specs          verified
+  npm run gen:specs          verified (generates .spec.md + docs/dependency-graph.md)
 
 All infrastructure is ready. Use ddd-data-modelling or ddd-spec to start
 building domain functions.
@@ -197,8 +198,9 @@ building domain functions.
 - **Merge, don't replace** existing `package.json` and `hooks.json`.
 - **All shared file content is defined here.** Other skills reference these files
   but do not create or modify them.
-- **No manifest.** Specs opt in to `.spec.md` generation via `document: true`.
-  The `generate-specs` script auto-discovers them via glob.
+- **No manifest.** All spec exports get `.spec.md` generation automatically.
+  `document: true` controls whether a `/docs/` page is created.
+  The `generate-specs` script auto-discovers specs via glob.
 - **Report every action.** The user should see exactly what was created, skipped,
   or updated.
 

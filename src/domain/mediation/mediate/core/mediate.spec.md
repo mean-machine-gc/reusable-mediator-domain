@@ -9,8 +9,8 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `executeFilters` | `STEP` | Run all filter steps | -- |
-| 2 | `executeTransforms` | `STEP` | Apply all transformations | `unknown_transform` |
+| 1 | [`executeFilters`](../steps/execute-filters.spec.md) | `STEP` | Run all filter steps | -- |
+| 2 | [`executeTransforms`](../steps/execute-transforms.spec.md) | `STEP` | Apply all transformations | `unknown_transform` |
 
 ---
 

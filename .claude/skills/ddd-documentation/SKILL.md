@@ -352,7 +352,8 @@ plain English grouped by success type.
 in `.spec.md` by `npm run gen:specs`. The docs page links to the `.spec.md` file
 instead of duplicating the tables. This prevents drift between the two artifacts.
 
-If the spec has `document: true`, the `.spec.md` will exist alongside the `.spec.ts`.
+The `.spec.md` always exists alongside the `.spec.ts` — it is generated for all specs.
+`document: true` controls whether a `/docs/` page is created by the ddd-documentation skill.
 
 ---
 

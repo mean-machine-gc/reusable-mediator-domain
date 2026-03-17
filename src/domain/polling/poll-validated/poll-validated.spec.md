@@ -12,11 +12,11 @@
 | 1 | `findIncomingProcessingsByState` | `DEP` | Fetch up to batchSize processing records in validated state | -- |
 | 2 | `findActiveMediationsByTopic` | `DEP` | Find all active mediations matching a topic | -- |
 | 3 | `getTransformRegistry` | `DEP` | Retrieve the transform function registry | -- |
-| 4 | `mediateAll` | `STEP` | Run all mediations for an event, collect outcomes | `unknown_transform` |
-| 5 | `safeGenerateId` | `SAFE-DEP` | Generate and validate a unique dispatch ID | `invalid_id` |
-| 6 | `createDispatch` | `STEP` | Create a dispatch aggregate for a routed mediation result | `already_exists` |
-| 7 | `mediateProcessing` | `STEP` | Transition processing record to mediated with outcomes | `not_found` |
-| 8 | `failProcessing` | `STEP` | Transition a record to failed state on error | `not_found` |
+| 4 | [`mediateAll`](steps/mediate-all.spec.md) | `STEP` | Run all mediations for an event, collect outcomes | `unknown_transform` |
+| 5 | [`safeGenerateId`](../../shared/safe-generate-id.spec.md) | `SAFE-DEP` | Generate and validate a unique dispatch ID | `invalid_id` |
+| 6 | [`createDispatch`](../../dispatches/create-dispatch/create-dispatch.spec.md) | `STEP` | Create a dispatch aggregate for a routed mediation result | `already_exists` |
+| 7 | [`mediateProcessing`](../../incoming-processing/mediate-processing/mediate-processing.spec.md) | `STEP` | Transition processing record to mediated with outcomes | `not_found` |
+| 8 | [`failProcessing`](../../incoming-processing/fail-processing/fail-processing.spec.md) | `STEP` | Transition a record to failed state on error | `not_found` |
 
 ---
 

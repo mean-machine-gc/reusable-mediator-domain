@@ -9,7 +9,7 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `mediateCore` | `STEP` | Run mediation pipeline (filter/transform) for a single mediation | `unknown_transform` |
+| 1 | [`mediateCore`](../../../mediation/mediate/core/mediate.spec.md) | `STEP` | Run mediation pipeline (filter/transform) for a single mediation | `unknown_transform` |
 
 ---
 

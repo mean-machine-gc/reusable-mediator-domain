@@ -31,13 +31,14 @@ src/
           subtract-quantity.ts          <- core factory implementation
 
 scripts/
-  spec-tools.ts             <- flattenSpec, toMarkdownTable, toStepTable
-  generate-specs.ts         <- auto-discovers document:true specs, writes .spec.md
+  spec-tools.ts             <- flattenSpec, toMarkdownTable, toStepTable, buildDependencyGraphMd
+  generate-specs.ts         <- auto-discovers all spec exports, writes .spec.md + dependency graph
   tsconfig.json
 
 docs/                       <- Jekyll Just the Docs site (business-friendly prose)
   _config.yml               <- Just the Docs theme config
   index.md                  <- Domain home
+  dependency-graph.md       <- Auto-generated Mermaid dependency graph of all specs
   cart/
     index.md                <- Aggregate overview (has_children: true)
     subtract-quantity.md    <- Operation page (parent: Cart)
@@ -126,7 +127,8 @@ type Spec<Fn extends AnyFn> = {
 
 One type for all functions — atomic, core factory, shell factory. The `steps`
 array is optional: present for factories, absent for atomic functions.
-`document: true` opts in to `.spec.md` generation via `npm run gen:specs`.
+All spec exports get `.spec.md` generation automatically via `npm run gen:specs`.
+`document: true` controls whether a `/docs/` page is created by the `ddd-documentation` skill.
 
 ### asStepSpec — AnyFn erasure helper
 
@@ -368,14 +370,19 @@ testSpec('checkActive', checkActiveSpec, checkActive)
 
 ## Spec Documentation (`.spec.md`)
 
-Specs with `document: true` get auto-generated `.spec.md` files containing
-pipeline tables and decision tables. No manual manifest — `npm run gen:specs`
-globs for `src/domain/**/*.spec.ts` and processes any spec export with `document: true`.
+All specs get auto-generated `.spec.md` files containing pipeline tables and
+decision tables. No manual manifest — `npm run gen:specs` globs for
+`src/domain/**/*.spec.ts` and processes every export that looks like a Spec object
+(has `shouldSucceedWith` and `shouldAssert`). `document: true` controls `/docs/`
+page generation only (by the `ddd-documentation` skill), not `.spec.md` generation.
+
+Step names in pipeline tables are hyperlinks to the step's own `.spec.md` file
+(resolved via relative paths from the dependency graph).
+
+A `docs/dependency-graph.md` Mermaid diagram is auto-generated showing the full
+spec dependency tree across all spec files.
 
 A Claude Code hook auto-runs this when `.spec.ts` files change.
-
-Typically only factory specs (core or shell) set `document: true` — they have
-step trees and decision tables worth generating. Atomic function specs usually don't.
 
 ## Implementation Typing
 

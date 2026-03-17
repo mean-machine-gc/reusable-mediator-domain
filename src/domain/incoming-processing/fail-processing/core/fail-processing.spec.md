@@ -1,7 +1,6 @@
-# fail-processing-core
+# fail-processing
 
-> Auto-generated from `fail-processing-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
-> For business-friendly documentation, see `/docs/`.
+> Auto-generated from `fail-processing.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 
 ---
 

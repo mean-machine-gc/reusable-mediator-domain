@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetDispatchById` | `SAFE-DEP` | Fetch and validate dispatch from persistence | `invalid_dispatch` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate created timestamp | `invalid_timestamp` |
-| 3 | `createDispatchCore` | `STEP` | Validate state gate and assemble ToDeliverDispatch | `already_exists` |
+| 1 | [`safeGetDispatchById`](../safe-get-dispatch-by-id.spec.md) | `SAFE-DEP` | Fetch and validate dispatch from persistence | `invalid_dispatch` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate created timestamp | `invalid_timestamp` |
+| 3 | [`createDispatchCore`](core/create-dispatch.spec.md) | `STEP` | Validate state gate and assemble ToDeliverDispatch | `already_exists` |
 | 4 | `upsertDispatch` | `DEP` | Persist the new aggregate | -- |
 
 ---

@@ -9,9 +9,9 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGenerateId` | `SAFE-DEP` | Generate and validate a unique mediation ID | `invalid_id` |
-| 2 | `safeGenerateTimestamp` | `SAFE-DEP` | Generate and validate creation timestamp | `invalid_timestamp` |
-| 3 | `assembleDraftMediation` | `STEP` | Assemble the draft mediation | -- |
+| 1 | [`safeGenerateId`](../../shared/safe-generate-id.spec.md) | `SAFE-DEP` | Generate and validate a unique mediation ID | `invalid_id` |
+| 2 | [`safeGenerateTimestamp`](../../shared/safe-generate-timestamp.spec.md) | `SAFE-DEP` | Generate and validate creation timestamp | `invalid_timestamp` |
+| 3 | [`assembleDraftMediation`](../shared/steps/assemble-draft-mediation.spec.md) | `STEP` | Assemble the draft mediation | -- |
 | 4 | `upsertMediation` | `DEP` | Persist the new mediation | -- |
 
 ---

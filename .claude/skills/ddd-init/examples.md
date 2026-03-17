@@ -357,16 +357,37 @@ export const execCanonical = <Fn extends AnyFn>(
 // =============================================================================
 // Spec Tools — flatten specs into decision tables
 // Strategy-aware: produces main table (linear) + per-handler sub-tables.
+// Dependency graph: builds a navigable graph of spec nodes and step edges.
 // =============================================================================
 
-import type { Spec, StepInfo, StrategyStep } from './spec-framework'
+import type { Spec, StepInfo, StrategyStep } from '../src/domain/shared/spec-framework'
+import { relative, dirname } from 'path'
+
+// -- Dependency Graph ---------------------------------------------------------
+
+export type SpecNode = {
+    name: string          // kebab-case from filename
+    specPath: string      // absolute path to .spec.md
+    spec: object          // object reference (for lookup by identity)
+    edges: SpecEdge[]     // outgoing deps (populated after all nodes built)
+}
+
+export type SpecEdge = {
+    stepName: string      // e.g. 'checkActivatableState'
+    type: 'step' | 'safe-dep' | 'dep' | 'strategy'
+    target: SpecNode | null  // null for deps or unresolved refs
+}
+
+export type DependencyGraph = {
+    nodes: Map<object, SpecNode>  // lookup by spec object identity
+}
 
 // -- Types --------------------------------------------------------------------
 
 export type FlatConstraint = {
     step: string
     failure: string
-    type: 'step' | 'dep' | 'strategy'
+    type: 'step' | 'safe-dep' | 'dep' | 'strategy'
 }
 
 export type StrategyTable = {
@@ -382,6 +403,25 @@ export type FlatTable = {
     strategies: StrategyTable[]   // one sub-table per handler
 }
 
+// -- linkStep -----------------------------------------------------------------
+
+function linkStep(
+    stepName: string,
+    specObj: object | undefined,
+    graph?: DependencyGraph,
+    currentPath?: string,
+): string {
+    if (!specObj || !graph || !currentPath) {
+        return `\`${stepName}\``
+    }
+    const node = graph.nodes.get(specObj)
+    if (!node) {
+        return `\`${stepName}\``
+    }
+    const rel = relative(dirname(currentPath), node.specPath)
+    return `[\`${stepName}\`](${rel})`
+}
+
 // -- flattenSpec --------------------------------------------------------------
 
 export function flattenSpec(spec: any): FlatTable {
@@ -392,11 +432,12 @@ export function flattenSpec(spec: any): FlatTable {
         for (const step of spec.steps as StepInfo[]) {
             switch (step.type) {
                 case 'step':
+                case 'safe-dep':
                     if (step.spec) {
                         const stepColumns = flattenAtomicSpec(step.name, step.spec)
-                        columns.push(...stepColumns)
+                        columns.push(...stepColumns.map(c => ({ ...c, type: step.type as FlatConstraint['type'] })))
                     } else {
-                        columns.push({ step: step.name, failure: `(${step.name})`, type: 'step' })
+                        columns.push({ step: step.name, failure: `(${step.name})`, type: step.type })
                     }
                     break
 
@@ -453,7 +494,7 @@ function flattenAtomicSpec(stepName: string, spec: any): FlatConstraint[] {
     if (spec.steps) {
         // Composed spec — recurse
         for (const step of spec.steps as StepInfo[]) {
-            if (step.type === 'step' && step.spec) {
+            if ((step.type === 'step' || step.type === 'safe-dep') && step.spec) {
                 const nested = flattenAtomicSpec(step.name, step.spec)
                 for (const entry of nested) {
                     result.push({ ...entry, step: `${stepName}.${entry.step}` })
@@ -592,7 +633,7 @@ export function toHandlerTables(table: FlatTable): string {
 
 // -- toStepTable --------------------------------------------------------------
 
-export function toStepTable(spec: any): string {
+export function toStepTable(spec: any, graph?: DependencyGraph, currentPath?: string): string {
     if (!spec.steps) return '_Atomic function — no pipeline steps._'
 
     const rows: string[][] = [
@@ -608,6 +649,12 @@ export function toStepTable(spec: any): string {
         switch (step.type) {
             case 'step':
                 typeStr = '`STEP`'
+                if (step.spec) {
+                    failures = Object.keys(step.spec.shouldFailWith || {})
+                }
+                break
+            case 'safe-dep':
+                typeStr = '`SAFE-DEP`'
                 if (step.spec) {
                     failures = Object.keys(step.spec.shouldFailWith || {})
                 }
@@ -631,7 +678,11 @@ export function toStepTable(spec: any): string {
             ? failures.map(f => f.startsWith('`') ? f : `\`${f}\``).join(', ')
             : '--'
 
-        rows.push([String(i + 1), `\`${step.name}\``, typeStr!, step.description, failStr])
+        const nameCell = (step.type === 'step' || step.type === 'safe-dep')
+            ? linkStep(step.name, step.spec, graph, currentPath)
+            : `\`${step.name}\``
+
+        rows.push([String(i + 1), nameCell, typeStr!, step.description, failStr])
     }
 
     return rows.map(r => `| ${r.join(' | ')} |`).join('\n')
@@ -640,8 +691,8 @@ export function toStepTable(spec: any): string {
 // -- buildSpecMd --------------------------------------------------------------
 // Assembles the full .spec.md with strategy-aware tables.
 
-export function buildSpecMd(name: string, spec: any): string {
-    const pipeline = toStepTable(spec)
+export function buildSpecMd(name: string, spec: any, graph?: DependencyGraph, currentPath?: string): string {
+    const pipeline = toStepTable(spec, graph, currentPath)
     const table = flattenSpec(spec)
     const main = toMainTable(table)
     const handlers = toHandlerTables(table)
@@ -650,7 +701,13 @@ export function buildSpecMd(name: string, spec: any): string {
         `# ${name}`,
         '',
         `> Auto-generated from \`${name}.spec.ts\`. Do not edit — run \`npm run gen:specs\` to regenerate.`,
-        `> For business-friendly documentation, see \`/docs/\`.`,
+    ]
+
+    if (spec.document) {
+        parts.push(`> For business-friendly documentation, see \`/docs/\`.`)
+    }
+
+    parts.push(
         '',
         '---',
         '',
@@ -663,11 +720,123 @@ export function buildSpecMd(name: string, spec: any): string {
         '## Decision Table',
         '',
         main,
-    ]
+    )
 
     if (handlers) {
         parts.push('', '---', '', handlers)
     }
+
+    return parts.join('\n') + '\n'
+}
+
+// -- buildDependencyGraphMd ---------------------------------------------------
+// Generates a Mermaid flowchart showing the full spec dependency graph.
+
+export function buildDependencyGraphMd(graph: DependencyGraph): string {
+    const lines: string[] = []
+
+    // Collect all nodes that have edges (factories/composed specs)
+    // and all nodes referenced as targets (to include leaf nodes in the graph)
+    const nodesWithEdges: SpecNode[] = []
+    const referencedNodes = new Set<SpecNode>()
+
+    for (const node of graph.nodes.values()) {
+        if (node.edges.length > 0) {
+            nodesWithEdges.push(node)
+            for (const edge of node.edges) {
+                if (edge.target) referencedNodes.add(edge.target)
+            }
+        }
+    }
+
+    // Deduplicate nodes (multiple spec objects can point to the same file)
+    const seen = new Set<string>()
+    const uniqueNodes = nodesWithEdges.filter(n => {
+        if (seen.has(n.specPath)) return false
+        seen.add(n.specPath)
+        return true
+    })
+
+    // Build stable node IDs from spec paths
+    const nodeId = (node: SpecNode): string => {
+        // Use path relative to src/domain/ for readable IDs
+        const match = node.specPath.match(/src\/domain\/(.+)\.spec\.md$/)
+        return match ? match[1].replace(/\//g, '_') : node.name
+    }
+
+    const nodeLabel = (node: SpecNode): string => {
+        const match = node.specPath.match(/src\/domain\/(.+)\.spec\.md$/)
+        return match ? match[1] : node.name
+    }
+
+    // Collect dep placeholder nodes
+    let depCounter = 0
+    const depNodes: string[] = []
+
+    lines.push('```mermaid')
+    lines.push('flowchart TD')
+
+    // Declare nodes
+    const declaredIds = new Set<string>()
+    for (const node of uniqueNodes) {
+        const id = nodeId(node)
+        if (!declaredIds.has(id)) {
+            lines.push(`    ${id}["${nodeLabel(node)}"]`)
+            declaredIds.add(id)
+        }
+
+        // Declare target nodes that aren't already sources
+        for (const edge of node.edges) {
+            if (edge.target) {
+                const targetId = nodeId(edge.target)
+                if (!declaredIds.has(targetId)) {
+                    lines.push(`    ${targetId}["${nodeLabel(edge.target)}"]`)
+                    declaredIds.add(targetId)
+                }
+            }
+        }
+    }
+
+    // Declare edges
+    for (const node of uniqueNodes) {
+        const sourceId = nodeId(node)
+        for (const edge of node.edges) {
+            if (edge.target) {
+                const targetId = nodeId(edge.target)
+                const label = edge.type === 'strategy' ? 'strategy' : edge.stepName
+                lines.push(`    ${sourceId} -->|${label}| ${targetId}`)
+            } else if (edge.type === 'dep') {
+                const depId = `dep_${depCounter++}`
+                depNodes.push(depId)
+                lines.push(`    ${depId}[/"${edge.stepName} (dep)"/]`)
+                lines.push(`    ${sourceId} -.->|${edge.stepName}| ${depId}`)
+            }
+        }
+    }
+
+    // Style dep nodes
+    if (depNodes.length > 0) {
+        lines.push(`    style ${depNodes.join(',')} fill:#f5f5f5,stroke:#999,stroke-dasharray: 5 5`)
+    }
+
+    lines.push('```')
+
+    const parts = [
+        '---',
+        'title: Dependency Graph',
+        'nav_order: 99',
+        'mermaid: true',
+        '---',
+        '',
+        '# Dependency Graph',
+        '',
+        '> Auto-generated by `npm run gen:specs`. Do not edit.',
+        '',
+        '---',
+        '',
+        ...lines,
+        '',
+    ]
 
     return parts.join('\n') + '\n'
 }
@@ -677,9 +846,10 @@ export function buildSpecMd(name: string, spec: any): string {
 
 ## scripts/generate-specs.ts (Step 4)
 
-Auto-discovers specs with `document: true` via glob — no manual manifest needed.
-Fully generated structural docs — pipeline tables and decision tables.
-Overwrites the `.spec.md` on every run. No prose, no markers, no manual editing.
+Auto-discovers all spec exports via glob — no manual manifest needed. Builds a
+dependency graph across all spec files, then generates `.spec.md` for every spec
+export (not just `document: true`). Also generates `docs/dependency-graph.md` with
+a Mermaid flowchart showing the full spec dependency tree. Overwrites on every run.
 
 ```ts
 // scripts/generate-specs.ts
@@ -687,50 +857,116 @@ Overwrites the `.spec.md` on every run. No prose, no markers, no manual editing.
 import { writeFileSync } from 'fs'
 import { globSync } from 'glob'
 import { resolve, basename } from 'path'
-import { buildSpecMd } from './spec-tools'
+import { buildSpecMd, buildDependencyGraphMd, type DependencyGraph, type SpecNode, type SpecEdge } from './spec-tools'
+
+function isSpec(value: unknown): boolean {
+    return (
+        value !== null &&
+        typeof value === 'object' &&
+        'shouldSucceedWith' in value &&
+        'shouldAssert' in value
+    )
+}
 
 async function main() {
-  const specFiles = globSync('src/domain/**/*.spec.ts')
+    const specFiles = globSync('src/domain/**/*.spec.ts')
 
-  if (specFiles.length === 0) {
-    console.log('No .spec.ts files found.')
-    return
-  }
+    if (specFiles.length === 0) {
+        console.log('No .spec.ts files found.')
+        return
+    }
 
-  let generated = 0
+    // -- Pass 1: import all modules, build graph nodes ------------------------
 
-  for (const file of specFiles) {
-    const resolvedPath = resolve(file)
-    const mod = await import(resolvedPath)
+    const graph: DependencyGraph = { nodes: new Map() }
+    const modules: Array<{ file: string; mod: any }> = []
 
-    // Find exported specs with document: true
-    for (const [exportName, value] of Object.entries(mod)) {
-      if (
-        value &&
-        typeof value === 'object' &&
-        'document' in value &&
-        (value as any).document === true
-      ) {
-        const name = basename(file, '.spec.ts')
+    for (const file of specFiles) {
+        const resolvedPath = resolve(file)
+        const mod = await import(resolvedPath)
+        modules.push({ file, mod })
+
         const mdPath = resolvedPath.replace(/\.spec\.ts$/, '.spec.md')
-        const content = buildSpecMd(name, value)
+        const name = basename(file, '.spec.ts')
+
+        for (const value of Object.values(mod)) {
+            if (isSpec(value)) {
+                const node: SpecNode = {
+                    name,
+                    specPath: mdPath,
+                    spec: value as object,
+                    edges: [],
+                }
+                graph.nodes.set(value as object, node)
+            }
+        }
+    }
+
+    // -- Pass 2: resolve edges ------------------------------------------------
+
+    for (const node of graph.nodes.values()) {
+        const spec = node.spec as any
+        if (!spec.steps) continue
+
+        for (const step of spec.steps) {
+            const edge: SpecEdge = {
+                stepName: step.name,
+                type: step.type,
+                target: null,
+            }
+
+            if ((step.type === 'step' || step.type === 'safe-dep') && step.spec) {
+                edge.target = graph.nodes.get(step.spec) ?? null
+            }
+
+            node.edges.push(edge)
+        }
+    }
+
+    // -- Pass 3: generate .spec.md files --------------------------------------
+
+    let generated = 0
+    const writtenPaths = new Set<string>()
+
+    for (const { file, mod } of modules) {
+        const resolvedPath = resolve(file)
+        const mdPath = resolvedPath.replace(/\.spec\.ts$/, '.spec.md')
+        if (writtenPaths.has(mdPath)) continue
+
+        const specs = Object.entries(mod).filter(([_, v]) => isSpec(v))
+        if (specs.length === 0) continue
+
+        // Pick primary: prefer document:true, then has steps, then first
+        const primary = specs.find(([_, v]) => (v as any).document === true)
+            ?? specs.find(([_, v]) => (v as any).steps)
+            ?? specs[0]
+
+        const [exportName, value] = primary
+        const name = basename(file, '.spec.ts')
+        const content = buildSpecMd(name, value, graph, mdPath)
         writeFileSync(mdPath, content)
+        writtenPaths.add(mdPath)
         console.log(`  ${name} (${exportName}): wrote ${mdPath}`)
         generated++
-      }
     }
-  }
 
-  if (generated === 0) {
-    console.log('No specs with document: true found — nothing to generate.')
-  } else {
-    console.log(`\nGenerated ${generated} .spec.md file(s).`)
-  }
+    // -- Pass 4: generate dependency graph ------------------------------------
+
+    const graphMd = buildDependencyGraphMd(graph)
+    const graphPath = resolve('docs/dependency-graph.md')
+    writeFileSync(graphPath, graphMd)
+    console.log(`  dependency-graph: wrote ${graphPath}`)
+
+    if (generated === 0) {
+        console.log('No spec exports found — nothing to generate.')
+    } else {
+        console.log(`\nGenerated ${generated} .spec.md file(s) + dependency graph.`)
+    }
 }
 
 main().catch(err => {
-  console.error('generate-specs failed:', err)
-  process.exit(1)
+    console.error('generate-specs failed:', err)
+    process.exit(1)
 })
 ```
 

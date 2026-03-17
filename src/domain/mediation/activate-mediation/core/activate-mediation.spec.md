@@ -9,8 +9,8 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `checkActivatableState` | `STEP` | Verify mediation is in draft or deactivated state | `already_active` |
-| 2 | `assembleActiveMediation` | `STEP` | Assemble active mediation from state and context | -- |
+| 1 | [`checkActivatableState`](../../shared/steps/check-activatable-state.spec.md) | `STEP` | Verify mediation is in draft or deactivated state | `already_active` |
+| 2 | [`assembleActiveMediation`](../../shared/steps/assemble-active-mediation.spec.md) | `STEP` | Assemble active mediation from state and context | -- |
 | 3 | `evaluateSuccessType` | `STEP` | Classify the success outcome | -- |
 
 ---

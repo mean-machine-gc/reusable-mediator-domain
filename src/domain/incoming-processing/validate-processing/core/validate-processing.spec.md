@@ -1,7 +1,6 @@
-# validate-processing-core
+# validate-processing
 
-> Auto-generated from `validate-processing-core.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
-> For business-friendly documentation, see `/docs/`.
+> Auto-generated from `validate-processing.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
 
 ---
 

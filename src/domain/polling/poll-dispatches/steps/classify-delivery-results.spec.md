@@ -1,7 +1,6 @@
 # classify-delivery-results
 
 > Auto-generated from `classify-delivery-results.spec.ts`. Do not edit — run `npm run gen:specs` to regenerate.
-> For business-friendly documentation, see `/docs/`.
 
 ---
 

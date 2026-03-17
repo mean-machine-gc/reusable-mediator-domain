@@ -9,10 +9,10 @@
 
 | # | Name | Type | Description | Failure Codes |
 | --- | --- | --- | --- | --- |
-| 1 | `safeGetDispatchById` | `SAFE-DEP` | Fetch and validate dispatch from persistence | `invalid_dispatch` |
-| 2 | `safeDeliver` | `SAFE-DEP` | Attempt HTTP delivery and validate DeliveryAttempt result | `invalid_delivery_attempt` |
+| 1 | [`safeGetDispatchById`](../safe-get-dispatch-by-id.spec.md) | `SAFE-DEP` | Fetch and validate dispatch from persistence | `invalid_dispatch` |
+| 2 | [`safeDeliver`](../safe-deliver.spec.md) | `SAFE-DEP` | Attempt HTTP delivery and validate DeliveryAttempt result | `invalid_delivery_attempt` |
 | 3 | `getMaxAttempts` | `DEP` | Retrieve the max attempts configuration | -- |
-| 4 | `recordDeliveryCore` | `STEP` | Evaluate attempt result, transition state accordingly | `already_terminal` |
+| 4 | [`recordDeliveryCore`](core/record-delivery.spec.md) | `STEP` | Evaluate attempt result, transition state accordingly | `already_terminal` |
 | 5 | `upsertDispatch` | `DEP` | Persist the updated aggregate | -- |
 
 ---
