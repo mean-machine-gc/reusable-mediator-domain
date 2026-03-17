@@ -60,7 +60,7 @@ When a mediation is created:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[create-mediation.spec.md](https://mean-machine-gc.github.io/src/domain/mediation/create-mediation/create-mediation.spec.md).
+[create-mediation.spec.md](https://github.com/mean-machine-gc/reusable-mediator-domain/blob/main/src/domain/mediation/create-mediation/create-mediation.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

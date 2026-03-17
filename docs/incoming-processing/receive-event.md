@@ -66,7 +66,7 @@ When an event is received:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[receive-event.spec.md](https://mean-machine-gc.github.io/src/domain/incoming-processing/receive-event/receive-event.spec.md).
+[receive-event.spec.md](https://github.com/mean-machine-gc/reusable-mediator-domain/blob/main/src/domain/incoming-processing/receive-event/receive-event.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.

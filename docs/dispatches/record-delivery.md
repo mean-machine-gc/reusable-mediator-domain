@@ -77,7 +77,7 @@ When max attempts are exhausted:
 ## Pipeline & Decision Table
 
 For the full pipeline table and decision table, see the auto-generated
-[record-delivery.spec.md](https://mean-machine-gc.github.io/src/domain/dispatches/record-delivery/record-delivery.spec.md).
+[record-delivery.spec.md](https://github.com/mean-machine-gc/reusable-mediator-domain/blob/main/src/domain/dispatches/record-delivery/record-delivery.spec.md).
 
 > **STEP** — domain function. Fully testable in isolation with `testSpec`.
 > **SAFE-DEP** — infrastructure dependency with runtime validation of returned data.
