@@ -419,29 +419,54 @@ export function buildDependencyGraphMd(graph: DependencyGraph): string {
     let depCounter = 0
     const depNodes: string[] = []
 
+    // Extract domain (first path segment) from a node label
+    const nodeDomain = (node: SpecNode): string => {
+        const label = nodeLabel(node)
+        return label.split('/')[0]
+    }
+
+    // Strip domain prefix from label for shorter subgraph labels
+    const shortLabel = (node: SpecNode): string => {
+        const label = nodeLabel(node)
+        const slash = label.indexOf('/')
+        return slash >= 0 ? label.slice(slash + 1) : label
+    }
+
+    // Capitalise domain name for subgraph title
+    const domainTitle = (domain: string): string =>
+        domain.split('-').map(w => w[0].toUpperCase() + w.slice(1)).join(' ')
+
     lines.push('```mermaid')
-    lines.push("%%{init: {'flowchart': {'useMaxWidth': false}}}%%")
-    lines.push('flowchart TD')
+    lines.push("%%{init: {'flowchart': {'useMaxWidth': false, 'nodeSpacing': 75, 'rankSpacing': 75, 'diagramPadding': 40, 'curve': 'linear'}}}%%")
+    lines.push('flowchart LR')
 
-    // Declare nodes
+    // Collect all nodes that need declaring, grouped by domain
+    const nodesByDomain = new Map<string, { id: string; label: string }[]>()
     const declaredIds = new Set<string>()
-    for (const node of uniqueNodes) {
-        const id = nodeId(node)
-        if (!declaredIds.has(id)) {
-            lines.push(`    ${id}["${nodeLabel(node)}"]`)
-            declaredIds.add(id)
-        }
 
-        // Declare target nodes that aren't already sources
+    const declareNode = (node: SpecNode) => {
+        const id = nodeId(node)
+        if (declaredIds.has(id)) return
+        declaredIds.add(id)
+        const domain = nodeDomain(node)
+        if (!nodesByDomain.has(domain)) nodesByDomain.set(domain, [])
+        nodesByDomain.get(domain)!.push({ id, label: shortLabel(node) })
+    }
+
+    for (const node of uniqueNodes) {
+        declareNode(node)
         for (const edge of node.edges) {
-            if (edge.target) {
-                const targetId = nodeId(edge.target)
-                if (!declaredIds.has(targetId)) {
-                    lines.push(`    ${targetId}["${nodeLabel(edge.target)}"]`)
-                    declaredIds.add(targetId)
-                }
-            }
+            if (edge.target) declareNode(edge.target)
         }
+    }
+
+    // Emit subgraphs grouped by domain
+    for (const [domain, nodes] of nodesByDomain) {
+        lines.push(`    subgraph ${domain}["${domainTitle(domain)}"]`)
+        for (const { id, label } of nodes) {
+            lines.push(`        ${id}["${label}"]`)
+        }
+        lines.push('    end')
     }
 
     // Declare edges
