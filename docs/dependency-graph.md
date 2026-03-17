@@ -11,6 +11,7 @@ mermaid: true
 ---
 
 ```mermaid
+%%{init: {'flowchart': {'useMaxWidth': false}}}%%
 flowchart TD
     polling_poll-validated_poll-validated["polling/poll-validated/poll-validated"]
     polling_poll-validated_steps_mediate-all["polling/poll-validated/steps/mediate-all"]

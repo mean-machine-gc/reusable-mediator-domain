@@ -420,6 +420,7 @@ export function buildDependencyGraphMd(graph: DependencyGraph): string {
     const depNodes: string[] = []
 
     lines.push('```mermaid')
+    lines.push("%%{init: {'flowchart': {'useMaxWidth': false}}}%%")
     lines.push('flowchart TD')
 
     // Declare nodes
